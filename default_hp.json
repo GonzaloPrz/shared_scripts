@@ -1,0 +1,57 @@
+{
+    "lr": {
+        "C": 1
+    },
+    "svc": {
+        "C": 1,
+        "gamma": "scale",
+        "kernel": "rbf",
+        "probability": true
+    },
+    "knnc": {
+        "n_neighbors": 5
+    },
+    "lda":{
+        "solver": "svd"
+    },
+    "qda":{
+        "reg_param": 0.0,
+        "tol": 0.0001
+    },
+    "xgb": {
+        "n_estimators": 100,
+        "max_depth": 6,
+        "learning_rate": 0.3
+    },
+    "nb": {
+        "priors": null
+    },
+    "ridge": {
+        "alpha": 1,
+        "tol": 0.0001,
+        "solver": "auto",
+        "random_state": 42,
+        "max_iter": 5000
+    },
+    "lasso": {
+        "alpha": 1,
+        "tol": 0.0001,
+        "random_state": 42,
+        "max_iter": 5000
+    },
+    "elastic": {
+        "alpha": 1,
+        "l1_ratio": 0.5,
+        "tol": 0.0001,
+        "random_state": 42,
+        "max_iter": 5000
+    },
+    "svr": {
+        "C": 1,
+        "kernel": "rbf",
+        "gamma": "scale"
+    },
+    "knnr": {
+        "n_neighbors": 5
+    }
+}

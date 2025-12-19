@@ -1,0 +1,74 @@
+{
+    "project_name": "affective_pitch_CN_FTD",
+    "stats": "",
+    "shuffle_labels": false,
+    "shuffle_all": true,
+    "stratify": true,
+    "calibrate": false,
+    "n_folds_outer": 5.0,
+    "n_folds_inner": 5.0,
+    "n_iter": 20.0,
+    "feature_selection": true,
+    "fill_na": -10,
+    "init_points": 20.0,
+    "n_seeds_train": 10.0,
+    "n_seeds_shuffle": 0.0,
+    "scaler_name": "StandardScaler",
+    "id_col": "id",
+    "n_boot": 1000.0,
+    "n_boot_test": 1000.0,
+    "n_boot_train": 0.0,
+    "filter_outliers": false,
+    "early_fusion": true,
+    "overwrite": false,
+    "parallel": true,
+    "n_seeds_test": 0,
+    "bootstrap_method": "bca",
+    "round_values": false,
+    "add_dem": false,
+    "cut_values": -1.0,
+    "regress_out": [
+        ""
+    ],
+    "regress_out_method": "linear",
+    "test_size": 0.0,
+    "data_file": "mean_pitch_features_CN_FTD.csv",
+    "tasks": [
+        "Fugu"
+    ],
+    "single_dimensions": [
+        "ALL",
+        "NEG",
+        "NEU",
+        "POS",
+        "sentiment"
+    ],
+    "y_labels": [
+        "group"
+    ],
+    "avoid_stats": [],
+    "stat_folder": "",
+    "random_seeds_train": [
+        3,
+        9,
+        27,
+        81,
+        243,
+        729,
+        2187,
+        6561,
+        19683,
+        59049
+    ],
+    "random_seeds_test": [
+        ""
+    ],
+    "random_seeds_shuffle": [
+        ""
+    ],
+    "bayes": true,
+    "covariates": [],
+    "problem_type": "clf",
+    "kfold_folder": "5_folds_5_folds",
+    "scoring_metric": "roc_auc"
+}

@@ -1,0 +1,255 @@
+{
+    "y_labels": {
+                "crossling_mci":["NPI_Anxiety_Severity","NPI_Depression_Severity","NPI_Apathy_Severity","NPI_Agitation_Severity"],
+                "affective_pitch_CN_AD": ["group"],
+                "affective_pitch_CN_FTD": ["group"],
+                "affective_pitch_AD_FTD": ["group"],
+                "53_ceac":["depression"],
+                "tell_classifier": ["target"],
+                "MCI_classifier_unbalanced": ["group","bio__bio__ptau217"],
+                "MCI_classifier": ["group"],
+                "Proyecto_Ivo": ["target"],
+                "arequipa": ["group"],
+                "GeroApathy_reg": [
+                    "DASS_21_Depression_V",
+                    "AES_Total_Score",
+                    "Depression_Total_Score",
+                    "MiniSea_MiniSea_Total_EkmanFaces",
+                    "MiniSea_minisea_total"
+                ],
+                "GERO_Ivo": [
+                    "norm_vol_bilateral_HIP",
+                    "norm_vol_mask_AD",
+                    "ACEIII_Total_Score",
+                    "IFS_Total_Score"
+                ],
+                "GERO_Ivo_competence":
+                {"brain":[
+                    "nps__nps__IFS_Total_Score",
+                    "nps__nps__ACEIII_Total_Score"],
+                "nps":[ "brain__brain__norm_vol_mask_AD",
+                        "brain__brain__norm_vol_bilateral_HIP"]
+                },
+                "MPLS": ["Minimental"],
+                "arequipa_reg": ["IFS"],
+
+                "tea_tomi_chu":["Grupo"],
+                "ch_co__v_tp__window_feature":["group"]
+                
+    },
+
+    "tasks": {
+                "crossling_mci":["positive","negative"],
+                "affective_pitch_CN_AD": ["Fugu"],
+                "affective_pitch_CN_FTD": ["Fugu"],
+                "affective_pitch_AD_FTD": ["Fugu"],
+                "53_ceac":["phq__cachorro"],
+                "tell_classifier": ["MOTOR-LIBRE"],
+                "MCI_classifier_unbalanced": [
+                    "grandmean",
+                    "nps"
+                ],
+                "MCI_classifier": [
+                    "fas",
+                    "animales",
+                    "fas__animales",
+                    "grandmean",
+                    "nps",
+                    "bio"
+                ],
+                "Proyecto_Ivo": [
+                    "nps",
+                    "Animales__P",
+                    "brain",
+                    "connectivity"
+                ],
+                "GeroApathy": ["agradable"],
+                "arequipa": [
+                    "craft",
+                    "fugu",
+                    "craft__fugu",
+                    "dia_tipico",
+                    "recuerdo_agradable",
+                    "dia_tipico__recuerdo_agradable"
+                ],
+                "ad_mci_hc": ["fugu"],
+                "ad_mci_hc_ct": [
+                    "image-description",
+                    "pleasant-memory",
+                    "routine",
+                    "image-description__pleasant-memory"
+                    ],
+                "ad_mci_hc_chile": ["fugu"],
+            
+                "ad_mci_hc_group_as_feature": ["fugu"],
+                "GeroApathy_reg": ["agradable"],
+                "GERO_Ivo": [
+                    "fas",
+                    "animales",
+                    "fas__animales",
+                    "grandmean"
+                ],
+                "GERO_Ivo_competence":["brain","nps"],
+                "MPLS": [
+                    "estado_general",
+                    "estado_general_2",
+                    "consulta_sobre_soledad_1",
+                    "consulta_sobre_soledad_2",
+                    "recuerdo_agradable",
+                    "animales",
+                    "palabras_con_f"
+                ],
+                "arequipa_reg": ["craft__fugu__lamina2"],
+                "tea_tomi_chu":[
+                    "IG",
+                    "IR"
+                ],
+                "ch_co__v_tp__window_feature":["pataka"]
+    },
+
+    "test_size": {
+    },
+    
+    "single_dimensions": {
+                    "crossling_mci":["all"],
+                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment"],
+                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment"],
+                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment"],
+                    "53_ceac":{"phq":["gemini"],
+                                "cachorro":["phq9__sentiment__verbosity"],
+                                "pais":["phq9__sentiment__verbosity"],
+                                "sobremesa":["phq9__sentiment__verbosity"],
+                                "cachorro__pais":["phq9__sentiment__verbosity"],
+                                "cachorro__sobremesa":["phq9__sentiment__verbosity"],
+                                "pais__sobremesa":["phq9__sentiment__verbosity"],
+                                "cachorro__pais__phq__sobremesa":["phq9__sentiment__verbosity"],
+                                "phq__cachorro":["gemini__phq9__sentiment__verbosity"],
+                                "phq__pais":["gemini__phq9__sentiment__verbosity"],
+                                "phq__sobremesa":["gemini__phq9__sentiment__verbosity"],
+                                "phq__cachorro__pais":["gemini__phq9__sentiment__verbosity"],
+                                "phq__cachorro__sobremesa":["gemini__phq9__sentiment__verbosity"],
+                                "phq__pais__sobremesa":["gemini__phq9__sentiment__verbosity"],
+                                "phq__cachorro__pais__sobremesa":["gemini__phq9__sentiment__verbosity"]
+                            },
+
+                    "tell_classifier": ["pitch",
+                        "voice_quality",
+                        "talking-intervals"],
+
+                    "MCI_classifier_unbalanced": {
+                                                "fas":
+                                                    ["word_properties",
+                                                    "speech_timing"],
+                                                "animales":
+                                                    ["word_properties",
+                                                    "speech_timing"],
+                                                "fas__animales":
+                                                    ["word_properties",
+                                                    "speech_timing"],
+                                                "grandmean":
+                                                    ["word_properties",
+                                                    "speech_timing"],
+                                                "nps":
+                                                    ["digits__memory__TMT__mmse"],
+                                                "bio":
+                                                    ["bio"]
+                                            },
+
+                    "MCI_classifier": {
+                                        "fas":
+                                            ["word_properties",
+                                            "speech_timing","valid_responses"],
+                                        "animales":
+                                            ["word_properties",
+                                            "speech_timing","valid_responses"],
+                                        "fas__animales":
+                                            ["word_properties",
+                                            "speech_timing","valid_responses"],
+                                        "grandmean":
+                                            ["word_properties",
+                                            "speech_timing","valid_responses"],
+                                        "nps":
+                                            ["digits",
+                                            "memory",
+                                            "TMT",
+                                            "mmse"],
+                                        "bio":
+                                            ["bio"]
+                                    },
+                                    "Proyecto_Ivo": {
+                                                "Animales__P": ["properties"],
+                                                "nps": ["executive"],
+                                                "brain": ["norm_brain_lit","norm_AAL"],
+                                                "connectivity": ["networks","selected_areas"]
+                                    },
+
+                    "arequipa": ["verbosity__word_properties__talking_intervals",
+                                    "mlu__verbosity__word_properties__talking_intervals",
+                                    "universal_dependencies__verbosity__word_properties__talking_intervals"],
+                    
+                    "GERO_Ivo": ["psycholinguistic",
+                                "speech_timing"],
+
+                    "GERO_Ivo_competence": {"brain": ["brain"],
+                                "nps": ["nps"]
+                                },
+
+                    "MPLS": ["sentiment_analysis",
+                            "psycholinguistic_objective",
+                            "pitch_analysis",
+                            "talking_intervals"],
+                
+                    "arequipa_reg": ["mlu__universal_dependencies__verbosity__word_properties__talking_intervals"],
+
+                    "tea_tomi_chu": ["nada"],
+
+                    "ch_co__v_tp__window_feature":["phoneme_feature"]
+    },
+
+    "data_file": {
+                "crossling_mci":"data_french.csv",
+                "affective_pitch_CN_AD": "mean_pitch_features_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_pitch_features_CN_FTD.csv",
+                "affective_pitch_AD_FTD": "mean_pitch_features_AD_FTD.csv",
+                "impact_dementia":"all_data.csv",
+                "53_ceac": "all_data.csv",
+                "tell_classifier": "data_MOTOR-LIBRE.csv",
+                "MCI_classifier_unbalanced": "data_matched_unbalanced_group.csv",
+                "MCI_classifier": "data_matched_group.csv",
+                "Proyecto_Ivo": "all_data_with_means.csv",
+                "arequipa": "data_matched_group.csv",
+                "GERO_Ivo": "all_data.csv",
+                "MPLS": "all_data.csv",
+                "arequipa_reg": "data_matched_group.csv",
+                "tea_tomi_chu":"solo_columnas_clasificador_formateadas.csv",
+                "ch_co__v_tp__window_feature":"ch_co__v_tp__window_feature.csv"
+    },
+
+    "data_file_test": {
+                    "crossling_mci":"data_spanish.csv",
+                    "arequipa" : "data_unmatched_group.csv",
+                    "arequipa_reg":"data_unmatched_group.csv"
+    },
+
+    "thresholds": {
+    },
+
+    "metrics_names": {
+                    "clf": ["roc_auc","accuracy","f1","recall","precision","norm_expected_cost","norm_cross_entropy"],
+                    "reg": [ "r2_score","mean_absolute_error","mean_squared_error"]
+                },
+
+    "scoring_metrics":{
+    },
+
+    "covars":{
+            "crossling_mci": ["age","sex","education"],
+            "53_ceac": [],
+            "arequipa_reg":["age","education","group","sex"],
+            "GERO_Ivo": ["age"],
+            "GERO_Ivo_competence": ["age"]
+    },
+
+    "cmatrix":{
+    }
+}
