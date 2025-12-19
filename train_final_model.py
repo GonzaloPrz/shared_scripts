@@ -24,8 +24,6 @@ from expected_cost.ec import CostMatrix
 
 import pickle
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(r'C:\Users\CNC Audio','gonza','scripts_generales')))
-
 import utils
 
 correction = 'fdr_bh'

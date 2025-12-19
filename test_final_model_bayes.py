@@ -16,8 +16,6 @@ from expected_cost.ec import CostMatrix
 from statsmodels.stats.multitest import multipletests
 from pingouin import partial_corr
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(Path.home(),'gonza','scripts_generales')))
-
 import utils
 
 late_fusion = False

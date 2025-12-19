@@ -32,8 +32,6 @@ from expected_cost.ec import *
 from expected_cost.calibration import calibration_train_on_heldout
 from psrcal.calibration import AffineCalLogLoss, AffineCalBrier, HistogramBinningCal
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(Path.home(),'gonza','scripts_generales')))
-
 import utils
 
 late_fusion = False

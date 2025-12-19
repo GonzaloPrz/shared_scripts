@@ -33,8 +33,6 @@ warnings.filterwarnings('ignore')
 
 from random import randint as randint_random 
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(Path.home(),'gonza','scripts_generales')))
-
 import utils
 
 def parse_args():

@@ -12,8 +12,6 @@ from pingouin import compute_bootci
 
 from expected_cost.ec import CostMatrix
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(Path.home(),'gonza','scripts_generales')))
-
 import utils
 
 ##---------------------------------PARAMETERS---------------------------------##

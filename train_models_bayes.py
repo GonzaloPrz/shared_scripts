@@ -21,8 +21,6 @@ import logging,sys,os,argparse
 from psrcal.calibration import AffineCalLogLoss
 from sklearn.preprocessing import LabelEncoder
 
-sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str(Path.home()) else sys.path.append(str(Path(Path.home(),'gonza','scripts_generales')))
-
 import utils
 
 from expected_cost.ec import CostMatrix
@@ -39,8 +37,8 @@ def parse_args():
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
     parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
     parser.add_argument('--n_folds_inner', type=float, default=5, help='Number of folds for cross validation (inner loop)')
-    parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
+    parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
     parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
@@ -50,7 +48,6 @@ def parse_args():
     parser.add_argument('--n_boot',type=int,default=1000,help='Number of bootstrap iterations')
     parser.add_argument('--n_boot_train',type=int,default=0,help='Number of bootstrap iterations for training')
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
-    parser.add_argument('--shuffle_all',type=int,default=1,help='Whether to shuffle all models or only the best ones')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
     parser.add_argument('--early_fusion',type=int,default=1,help='Whether to perform early fusion')
     parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
