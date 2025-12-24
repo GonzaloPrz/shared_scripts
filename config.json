@@ -1,16 +1,15 @@
 {
-    "project_name": "affective_pitch_CN_FTD",
+    "project_name": "Proyecto_Ivo",
     "stats": "",
     "shuffle_labels": false,
-    "shuffle_all": true,
     "stratify": true,
     "calibrate": false,
-    "n_folds_outer": 5.0,
-    "n_folds_inner": 5.0,
-    "n_iter": 20.0,
+    "n_folds_outer": 3.0,
+    "n_folds_inner": 11.0,
+    "n_iter": 15.0,
     "feature_selection": true,
     "fill_na": -10,
-    "init_points": 20.0,
+    "init_points": 50.0,
     "n_seeds_train": 10.0,
     "n_seeds_shuffle": 0.0,
     "scaler_name": "StandardScaler",
@@ -19,7 +18,7 @@
     "n_boot_test": 1000.0,
     "n_boot_train": 0.0,
     "filter_outliers": false,
-    "early_fusion": true,
+    "early_fusion": false,
     "overwrite": false,
     "parallel": true,
     "n_seeds_test": 0,
@@ -32,19 +31,31 @@
     ],
     "regress_out_method": "linear",
     "test_size": 0.0,
-    "data_file": "mean_pitch_features_CN_FTD.csv",
+    "data_file": "all_data_with_means.csv",
     "tasks": [
-        "Fugu"
+        "nps",
+        "Animales__P",
+        "brain",
+        "connectivity"
     ],
-    "single_dimensions": [
-        "ALL",
-        "NEG",
-        "NEU",
-        "POS",
-        "sentiment"
-    ],
+    "single_dimensions": {
+        "Animales__P": [
+            "properties"
+        ],
+        "nps": [
+            "executive"
+        ],
+        "brain": [
+            "norm_brain_lit",
+            "norm_AAL"
+        ],
+        "connectivity": [
+            "networks",
+            "selected_areas"
+        ]
+    },
     "y_labels": [
-        "group"
+        "target"
     ],
     "avoid_stats": [],
     "stat_folder": "",
@@ -69,6 +80,6 @@
     "bayes": true,
     "covariates": [],
     "problem_type": "clf",
-    "kfold_folder": "5_folds_5_folds",
+    "kfold_folder": "3_folds_11_folds",
     "scoring_metric": "roc_auc"
 }

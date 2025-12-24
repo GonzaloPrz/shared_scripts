@@ -30,7 +30,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='crossling_mci',type=str,help='Project name')
+    parser.add_argument('--project_name', default='affective_pitch_CN_FTD',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
-    parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
+    parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
     parser.add_argument('--n_seeds_shuffle',type=int,default=1,help='Number of seeds for shuffling')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
@@ -49,9 +49,9 @@ def parse_args():
     parser.add_argument('--n_boot_train',type=int,default=0,help='Number of bootstrap iterations for training')
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
-    parser.add_argument('--early_fusion',type=int,default=1,help='Whether to perform early fusion')
+    parser.add_argument('--early_fusion',type=int,default=0,help='Whether to perform early fusion')
     parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
-    parser.add_argument('--parallel',type=int,default=0,help='Whether to parallelize processes or not')
+    parser.add_argument('--parallel',type=int,default=1,help='Whether to parallelize processes or not')
     parser.add_argument('--n_seeds_test',type=int,default=1,help='Number of seeds for testing')
     parser.add_argument('--bootstrap_method',type=str,default='bca',help='Bootstrap method [bca, percentile, basic]')
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
@@ -67,7 +67,6 @@ def load_configuration(args):
         project_name = args.project_name,
         stats = str(args.stats),
         shuffle_labels = bool(args.shuffle_labels),
-        shuffle_all = bool(args.shuffle_all),
         stratify = bool(args.stratify),
         calibrate = bool(args.calibrate),
         n_folds_outer = float(args.n_folds_outer),

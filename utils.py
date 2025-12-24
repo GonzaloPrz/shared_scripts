@@ -7,7 +7,6 @@ import pandas as pd
 from sklearn.svm import SVR, SVC
 from pathlib import Path
 from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn import metrics
 
 from expected_cost.ec import *
 from expected_cost.utils import *
@@ -18,7 +17,7 @@ from psrcal.calibration import *
 
 from joblib import Parallel, delayed
 
-import math
+import math, shap
 
 from bayes_opt import BayesianOptimization
 
@@ -73,7 +72,8 @@ class Model():
         
     def eval(self,X,problem_type='clf',covariates=None,fill_na=None):
         
-        X_t = self.scaler.transform(X.values) if self.scaler is not None else X.values
+        X_input = X.values if hasattr(X,'values') else X
+        X_t = self.scaler.transform(X_input) if self.scaler is not None else X_input
         
         if fill_na is not None:
             nan_mask = np.isnan(X_t)
@@ -83,16 +83,16 @@ class Model():
         
         X_t = pd.DataFrame(data=X_t,columns=X.columns)
 
+        if covariates is not None:
+                
+            for feature in X_t.columns:
+                X_t[feature] = X_t[feature] - self.regress_out_model[feature].predict(covariates)
+
         if problem_type == 'clf':
             prob = self.model.predict_proba(X_t)
             prob = np.clip(prob,1e-2,1-1e-2)
             score = np.log(prob)
         else:
-            if covariates is not None:
-                
-                for feature in X_t.columns:
-                    X_t[feature] = X_t[feature] - self.regress_out_model[feature].predict(covariates)
-
             score = self.model.predict(X_t)
 
         score_filled = score.copy()
@@ -1216,3 +1216,82 @@ def regress_out_fn(
         index=data.index,
         name=f"{target_column}_residual",
     ), model
+
+def run_shap_analysis(model_wrapper, X_dev, y_dev, iterator,fill_na=0):
+    """
+    Genera gráficos SHAP agnósticos al modelo (Linear, Tree, o Kernel).
+    
+    Args:
+        model_wrapper: Tu objeto clase Model (de utils.py)
+        X_train: Datos usados para entrenar (para fondo de referencia)
+        X_test: Datos a explicar (el set de test)
+        feature_names: Lista de nombres de las columnas
+        output_dir: Ruta donde guardar las imágenes
+    """
+    
+    # 1. Extraer el modelo subyacente de tu clase wrapper
+    #model = model_wrapper.model
+    
+    model_type = type(model_wrapper.model).__name__
+    print(f"Calculando SHAP para modelo tipo: {model_type}")
+
+    explainer = None
+    shap_values = pd.DataFrame(columns=X_dev.columns,index=range(X_dev.shape[0]),dtype=float)
+    
+    try:
+        for train_index, val_index in iterator.split(X_dev,y_dev):
+            X_train = X_dev.loc[train_index]
+            X_val = X_dev.loc[val_index]
+
+            # A. Modelos basados en Árboles (XGBoost, Random Forest) -> TreeExplainer (Rápido y Exacto)
+            if 'XGB' in model_type or 'Forest' in model_type or 'Tree' in model_type:
+                explainer = shap.TreeExplainer(model_wrapper.model)
+                shap_values.loc[val_index] = explainer.shap_values(X_val)
+                
+                # Fix para XGBoost binario que a veces devuelve lista
+                if isinstance(shap_values, list):
+                    shap_values.loc[val_index] = shap_values[1] 
+
+            # B. Modelos Lineales (LogisticRegression, Ridge, Lasso, SVM-Linear) -> LinearExplainer
+            elif 'Linear' in model_type or 'Logistic' in model_type or 'Ridge' in model_type or 'Lasso' in model_type:
+                # LinearExplainer necesita un "background" para comparar (usamos X_train resumen)
+                background = shap.kmeans(X_train, 100) # Resumen de 100 puntos para velocidad
+                explainer = shap.LinearExplainer(model_wrapper.model, background)
+                shap_values.loc[val_index] = explainer.shap_values(X_val)
+
+            # C. Modelos Kernel/Caja Negra (SVM-RBF, KNN) -> KernelExplainer (Lento pero universal)
+            else:
+                print("Usando KernelExplainer (esto puede tardar)...")
+                # Usamos un resumen del train set porque KernelExplainer es computacionalmente costoso
+                X_train = pd.DataFrame(columns=X_train.columns,data=model_wrapper.imputer.transform(X_train.values))
+               
+                if fill_na == 0:
+                    X_train = pd.DataFrame(columns=X_train.columns,data=model_wrapper.scaler.transform(X_train.values))
+                else:
+                    nan_mask = np.isnan(X_train.values)
+                    X_train.loc[nan_mask] = fill_na
+
+                background = shap.kmeans(X_train, 50) 
+                
+                # Nota: KernelExplainer necesita la función de predicción de probabilidad si es clf
+                
+                X_val = pd.DataFrame(columns=X_val.columns,data=model_wrapper.scaler.transform(X_val.values))
+                if fill_na == 0:
+                    X_val = pd.DataFrame(columns=X_val.columns,data=model_wrapper.imputer.transform(X_val.values))
+                else:
+                    nan_mask = np.isnan(X_val.values)
+                    X_val.loc[nan_mask] = fill_na
+
+                if hasattr(model_wrapper.model, 'predict_proba'):
+                    predict_fn = lambda x: model_wrapper.model.predict_proba(x)[:, 1] # Probabilidad clase 1
+                else:
+                    predict_fn = model_wrapper.model.predict  
+
+                explainer = shap.KernelExplainer(predict_fn, background)
+                shap_values.loc[val_index] = explainer.shap_values(X_val)
+
+        return shap_values
+    except Exception as e:
+        print(f"Error al calcular SHAP: {e}")
+        print("Sugerencia: Revisa si el modelo soporta introspección directa o si hay mismatch de dimensiones.")
+        return None
