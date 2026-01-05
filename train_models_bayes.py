@@ -30,7 +30,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='affective_pitch_CN_FTD',type=str,help='Project name')
+    parser.add_argument('--project_name', default='MCI_classifier_unbalanced',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
@@ -40,7 +40,7 @@ def parse_args():
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
-    parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
+    parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
     parser.add_argument('--n_seeds_shuffle',type=int,default=1,help='Number of seeds for shuffling')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
@@ -50,14 +50,14 @@ def parse_args():
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
     parser.add_argument('--early_fusion',type=int,default=0,help='Whether to perform early fusion')
-    parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
-    parser.add_argument('--parallel',type=int,default=1,help='Whether to parallelize processes or not')
+    parser.add_argument('--overwrite',type=int,default=1,help='Whether to overwrite past results or not')
+    parser.add_argument('--parallel',type=int,default=0,help='Whether to parallelize processes or not')
     parser.add_argument('--n_seeds_test',type=int,default=1,help='Number of seeds for testing')
     parser.add_argument('--bootstrap_method',type=str,default='bca',help='Bootstrap method [bca, percentile, basic]')
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out',type=str,default='sex_age_education',help='List of demographic variables to regress out from target variable, separated by "_"')
     parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
@@ -285,7 +285,8 @@ for task in tasks:
                 strat_col = y
             else:
                 strat_col = None
-
+            
+            covariates_ = all_data[covariates]
             for model_key, model_class in models_dict[config['problem_type']].items():        
                 print(model_key)
                 
@@ -358,7 +359,7 @@ for task in tasks:
 
                 subfolders = [
                     task, dimension,
-                    config['kfold_folder'], f'{y_label}_res' if len(covariates) > 0 else y_label, config['stat_folder'],scoring_metric,
+                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(covariates) > 0 else y_label, config['stat_folder'],scoring_metric,
                     'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
                     'filter_outliers' if config['filter_outliers'] and config['problem_type'] == 'reg' else '','rounded' if round_values else '','cut' if cut_values > 0 else '',
                     'shuffle' if config['shuffle_labels'] else ''
@@ -447,7 +448,7 @@ for task in tasks:
 
                     all_models,outputs_best,y_dev,y_pred_best,IDs_dev = utils.nestedCVT(model_class=models_dict[config['problem_type']][model_key],
                                                                                         scaler=StandardScaler if config['scaler_name'] == 'StandardScaler' else MinMaxScaler,
-                                                                                        imputer=KNNImputer,
+                                                                                        imputer=None,
                                                                                         X=X_train_,
                                                                                         y=y_train_.values if isinstance(y_train_, pd.Series) else y_train_,
                                                                                         n_iter=int(config['n_iter']),
@@ -467,7 +468,7 @@ for task in tasks:
                                                                                         calmethod=calmethod,
                                                                                         calparams=calparams,
                                                                                         round_values=round_values,
-                                                                                        covariates=covariates if isinstance(covariates,pd.DataFrame) else None,
+                                                                                        covariates=covariates_ if isinstance(covariates_,pd.DataFrame) else None,
                                                                                         fill_na = fill_na,
                                                                                         regress_out_method = config['regress_out_method']
                                                                                         )

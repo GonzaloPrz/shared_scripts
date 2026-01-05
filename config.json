@@ -1,15 +1,15 @@
 {
-    "project_name": "Proyecto_Ivo",
+    "project_name": "affective_pitch_CN_AD",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
-    "n_folds_outer": 3.0,
-    "n_folds_inner": 11.0,
-    "n_iter": 15.0,
+    "n_folds_outer": 5.0,
+    "n_folds_inner": 5.0,
+    "n_iter": 20.0,
     "feature_selection": true,
-    "fill_na": -10,
-    "init_points": 50.0,
+    "fill_na": 0,
+    "init_points": 20.0,
     "n_seeds_train": 10.0,
     "n_seeds_shuffle": 0.0,
     "scaler_name": "StandardScaler",
@@ -19,43 +19,33 @@
     "n_boot_train": 0.0,
     "filter_outliers": false,
     "early_fusion": false,
-    "overwrite": false,
-    "parallel": true,
+    "overwrite": true,
+    "parallel": false,
     "n_seeds_test": 0,
     "bootstrap_method": "bca",
     "round_values": false,
     "add_dem": false,
     "cut_values": -1.0,
     "regress_out": [
-        ""
+        "age",
+        "education",
+        "sex"
     ],
     "regress_out_method": "linear",
     "test_size": 0.0,
-    "data_file": "all_data_with_means.csv",
+    "data_file": "mean_pitch_features_CN_AD.csv",
     "tasks": [
-        "nps",
-        "Animales__P",
-        "brain",
-        "connectivity"
+        "Fugu"
     ],
-    "single_dimensions": {
-        "Animales__P": [
-            "properties"
-        ],
-        "nps": [
-            "executive"
-        ],
-        "brain": [
-            "norm_brain_lit",
-            "norm_AAL"
-        ],
-        "connectivity": [
-            "networks",
-            "selected_areas"
-        ]
-    },
+    "single_dimensions": [
+        "ALL",
+        "NEG",
+        "NEU",
+        "POS",
+        "sentiment"
+    ],
     "y_labels": [
-        "target"
+        "group"
     ],
     "avoid_stats": [],
     "stat_folder": "",
@@ -78,8 +68,12 @@
         ""
     ],
     "bayes": true,
-    "covariates": [],
+    "covariates": [
+        "age",
+        "sex",
+        "education"
+    ],
     "problem_type": "clf",
-    "kfold_folder": "3_folds_11_folds",
+    "kfold_folder": "5_folds_5_folds",
     "scoring_metric": "roc_auc"
 }
