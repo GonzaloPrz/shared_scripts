@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from sklearn.model_selection import StratifiedKFold, KFold, LeaveOneOut, StratifiedShuffleSplit, ShuffleSplit
+from sklearn.model_selection import StratifiedKFold, KFold, LeaveOneGroupOut, StratifiedShuffleSplit, ShuffleSplit, StratifiedGroupKFold, GroupKFold
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier as KNNC
@@ -43,7 +43,6 @@ def parse_args():
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
     parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
-    parser.add_argument('--n_seeds_shuffle',type=int,default=1,help='Number of seeds for shuffling')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
     parser.add_argument('--id_col', type=str, default='id', help='ID column name')
     parser.add_argument('--n_boot',type=int,default=1000,help='Number of bootstrap iterations')
@@ -77,7 +76,6 @@ def load_configuration(args):
         fill_na = int(args.fill_na),
         init_points = float(args.init_points),
         n_seeds_train = float(args.n_seeds_train) if args.n_folds_outer!= -1 else float(1),
-        n_seeds_shuffle = float(args.n_seeds_shuffle) if args.shuffle_labels else float(0),
         scaler_name = args.scaler_name,
         id_col = args.id_col,
         n_boot = float(args.n_boot),
@@ -154,7 +152,6 @@ config['stat_folder'] = '_'.join(sorted(config['stats'].split('_')))
 
 config['random_seeds_train'] = [int(3**x) for x in np.arange(1, config['n_seeds_train']+1)]
 config['random_seeds_test'] = [int(3**x) for x in np.arange(1, config['n_seeds_test']+1)] if config['test_size'] > 0 else ['']
-config['random_seeds_shuffle'] = [float(3**x) for x in np.arange(1, config['n_seeds_shuffle']+1)] if config['shuffle_labels'] else ['']
 config['bayes'] = True
 
 if config['calibrate']:
@@ -249,10 +246,6 @@ for task in tasks:
                 config['problem_type'] = 'clf'
                 scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
 
-            if config['project_name'] == 'crossling_mci':
-                config['problem_type'] = 'reg'
-                scoring_metric = 'r2'
-
             if config['problem_type'] == 'reg' and config['filter_outliers']:
                 all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
 
@@ -292,6 +285,9 @@ for task in tasks:
                 strat_col = None
             
             covariates_ = all_data[covariates]
+            if covariates_.shape[0] != 0:
+                all_data.dropna(subset=covariates,inplace=True)
+            
             for model_key, model_class in models_dict[config['problem_type']].items():        
                 print(model_key)
                 
@@ -310,13 +306,13 @@ for task in tasks:
 
                 if n_folds_outer== 0:
                     n_folds_outer= int(n_samples_dev / np.unique(y).shape[0])
-                    CV_outer = (StratifiedKFold(n_splits=n_folds_outer, shuffle=True)
+                    CV_outer = (StratifiedGroupKFold(n_splits=n_folds_outer, shuffle=True)
                                 if strat_col is not None 
-                                else KFold(n_splits=n_folds_outer, shuffle=True))
+                                else GroupKFold(n_splits=n_folds_outer, shuffle=True,))
                     config["kfold_folder"] = f'l{np.unique(y).shape[0]}out'
                     n_samples_outer = n_samples_dev - np.unique(y).shape[0]
                 elif n_folds_outer== -1:
-                    CV_outer = LeaveOneOut()
+                    CV_outer = LeaveOneGroupOut()
                     n_samples_outer = n_samples_dev - 1
                     config["kfold_folder"] = 'loocv'
                 elif n_folds_outer < 1:
@@ -328,21 +324,21 @@ for task in tasks:
 
                 else:
                     n_folds_outer = int(n_folds_outer)
-                    CV_outer = (StratifiedKFold(n_splits=n_folds_outer, shuffle=True)
+                    CV_outer = (StratifiedGroupKFold(n_splits=n_folds_outer, shuffle=True)
                                 if strat_col is not None
-                                else KFold(n_splits=n_folds_outer, shuffle=True))
+                                else GroupKFold(n_splits=n_folds_outer, shuffle=True))
                     n_samples_outer = int(n_samples_dev*(1-1/n_folds_outer))
                     config['kfold_folder'] = f'{n_folds_outer}_folds' 
                 
                 if n_folds_inner == 0:
                     n_folds_inner = int(n_samples_outer / np.unique(y).shape[0])
-                    CV_inner = (StratifiedKFold(n_splits=n_folds_inner, shuffle=True)
+                    CV_inner = (StratifiedGroupKFold(n_splits=n_folds_inner, shuffle=True)
                                 if strat_col is not None
-                                else KFold(n_splits=n_folds_inner, shuffle=True))
+                                else GroupKFold(n_splits=n_folds_inner, shuffle=True))
                     config["kfold_folder"] += f'_l{np.unique(y).shape[0]}ocv'
                     n_max = n_samples_outer - np.unique(y).shape[0]
                 elif n_folds_inner == -1:
-                    CV_inner = LeaveOneOut()
+                    CV_inner = LeaveOneGroupOut()
                     config["kfold_folder"] += '_loocv'
                     n_max = n_samples_outer - 1
                 elif n_folds_inner < 1:
@@ -353,9 +349,9 @@ for task in tasks:
                     config["kfold_folder"] += f'_{int(n_folds_inner*100)}pct'
                 else: 
                     n_folds_inner = int(n_folds_inner)
-                    CV_inner = (StratifiedKFold(n_splits=n_folds_inner, shuffle=True)
+                    CV_inner = (StratifiedGroupKFold(n_splits=n_folds_inner, shuffle=True)
                                 if strat_col is not None
-                                else KFold(n_splits=n_folds_inner, shuffle=True))
+                                else GroupKFold(n_splits=n_folds_inner, shuffle=True))
                     n_max = int(n_samples_outer*(1-1/n_folds_inner))
                     config["kfold_folder"] += f'_{n_folds_inner}_folds'
 
