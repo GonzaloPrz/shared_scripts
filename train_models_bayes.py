@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from sklearn.model_selection import StratifiedKFold, KFold, LeaveOneGroupOut, StratifiedShuffleSplit, ShuffleSplit, StratifiedGroupKFold, GroupKFold
+from sklearn.model_selection import LeaveOneGroupOut, StratifiedGroupShuffleSplit, GroupShuffleSplit, StratifiedGroupKFold, GroupKFold
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier as KNNC
@@ -316,9 +316,9 @@ for task in tasks:
                     n_samples_outer = n_samples_dev - 1
                     config["kfold_folder"] = 'loocv'
                 elif n_folds_outer < 1:
-                    CV_outer = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds_outer)
+                    CV_outer = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds_outer)
                                 if strat_col is not None
-                                else ShuffleSplit(n_splits=1,test_size=n_folds_outer))
+                                else GroupShuffleSplit(n_splits=1,test_size=n_folds_outer))
                     n_samples_outer = int(n_samples_dev*(1-n_folds_outer))
                     config['kfold_folder'] = f'{int(n_folds_outer*100)}pct'
 
@@ -342,9 +342,9 @@ for task in tasks:
                     config["kfold_folder"] += '_loocv'
                     n_max = n_samples_outer - 1
                 elif n_folds_inner < 1:
-                    CV_inner = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds_inner)
+                    CV_inner = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds_inner)
                                 if strat_col is not None
-                                else ShuffleSplit(n_splits=1,test_size=n_folds_inner))
+                                else GroupShuffleSplit(n_splits=1,test_size=n_folds_inner))
                     n_max = int(n_samples_outer*(1-n_folds_inner))
                     config["kfold_folder"] += f'_{int(n_folds_inner*100)}pct'
                 else: 

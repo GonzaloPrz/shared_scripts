@@ -13,7 +13,7 @@ from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.neighbors import KNeighborsClassifier as KNNC
 from sklearn.neighbors import KNeighborsRegressor as KNNR
-from sklearn.model_selection import StratifiedKFold, KFold, LeaveOneOut, StratifiedShuffleSplit, ShuffleSplit
+from sklearn.model_selection import StratifiedGroupKFold, GroupKFold, LeaveOneGroupOut, StratifiedGroupShuffleSplit, GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
@@ -262,21 +262,21 @@ for threshold in thresholds:
                 if n_folds == 0:
                     n_folds = int(np.floor(X_train.shape[0]/np.unique(y_train).shape[0]))
                     n_max = X_train.shape[0] - np.unique(y_train).shape[0]
-                    CV = (StratifiedKFold(n_splits=n_folds, shuffle=True)
+                    CV = (StratifiedGroupKFold(n_splits=n_folds, shuffle=True)
                                 if config['stratify'] and problem_type == 'clf'
-                                else KFold(n_splits=n_folds, shuffle=True))   
+                                else GroupKFold(n_splits=n_folds, shuffle=True))   
                 elif n_folds == -1:
-                    CV = LeaveOneOut()
+                    CV = LeaveOneGroupOut()
                     n_max = X_train.shape[0] - 1
                 elif n_folds < 1:
-                    CV = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds)
+                    CV = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds)
                                 if config['stratify'] and problem_type == 'clf'
-                                else ShuffleSplit(n_splits=1,test_size=n_folds))
+                                else GroupShuffleSplit(n_splits=1,test_size=n_folds))
                     n_max = int(X_train.shape[0]*(1-n_folds))
                 else:
-                    CV = (StratifiedKFold(n_splits=int(n_folds), shuffle=True)
+                    CV = (StratifiedGroupKFold(n_splits=int(n_folds), shuffle=True)
                                 if config['stratify'] and problem_type == 'clf'
-                                else KFold(n_splits=int(n_folds), shuffle=True))  
+                                else GroupKFold(n_splits=int(n_folds), shuffle=True))  
                     n_max = int(X_train.shape[0]*(1-1/n_folds))
                         
                 hyperp['knnc']['n_neighbors'] = (1,n_max)
