@@ -235,7 +235,7 @@
     },
 
     "metrics_names": {
-                    "clf": ["roc_auc","accuracy","f1","recall","precision","norm_expected_cost","norm_cross_entropy"],
+                    "clf": ["roc_auc","accuracy","balanced_accuracy","f1","recall","precision","norm_expected_cost","norm_cross_entropy"],
                     "reg": [ "r2_score","mean_absolute_error","mean_squared_error"]
                 },
 

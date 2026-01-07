@@ -16,7 +16,8 @@ from sklearn.preprocessing import MinMaxScaler,StandardScaler
 from sklearn.impute import KNNImputer
 from xgboost import XGBClassifier as xgboost
 from xgboost import XGBRegressor as xgboostr
-import itertools,pickle,sys, json
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+import itertools, json
 import logging,sys,os,argparse
 from psrcal.calibration import AffineCalLogLoss
 from sklearn.preprocessing import LabelEncoder
@@ -97,6 +98,8 @@ def load_configuration(args):
 
     return config
 
+imputer = KNNImputer
+
 args = parse_args()
 config = load_configuration(args)
 project_name = config['project_name']
@@ -165,6 +168,7 @@ models_dict = {'clf':{
                     'lr':LR,
                     'knnc':KNNC,
                     'xgb':xgboost,
+                    'rf':RandomForestClassifier
                     #'qda':QDA,
                     #'lda': LDA
                     },
@@ -172,8 +176,9 @@ models_dict = {'clf':{
                 'reg':{'lasso':Lasso,
                     'ridge':Ridge,
                     'elastic':ElasticNet,
-                   #'knnr':KNNR,
-                   #'svr':SVR,
+                    'rf':RandomForestRegressor
+                    #'knnr':KNNR,
+                    #'svr':SVR,
                     #'xgb':xgboostr
                     }
 }
@@ -448,7 +453,7 @@ for task in tasks:
 
                     all_models,outputs_best,y_dev,y_pred_best,IDs_dev = utils.nestedCVT(model_class=models_dict[config['problem_type']][model_key],
                                                                                         scaler=StandardScaler if config['scaler_name'] == 'StandardScaler' else MinMaxScaler,
-                                                                                        imputer=None,
+                                                                                        imputer=imputer,
                                                                                         X=X_train_,
                                                                                         y=y_train_.values if isinstance(y_train_, pd.Series) else y_train_,
                                                                                         n_iter=int(config['n_iter']),
