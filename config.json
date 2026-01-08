@@ -6,12 +6,11 @@
     "calibrate": false,
     "n_folds_outer": 5.0,
     "n_folds_inner": 5.0,
-    "n_iter": 20.0,
+    "n_iter": 15.0,
     "feature_selection": true,
-    "fill_na": 0,
-    "init_points": 20.0,
+    "fill_na": -10,
+    "init_points": 15.0,
     "n_seeds_train": 10.0,
-    "n_seeds_shuffle": 0.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
@@ -20,20 +19,18 @@
     "filter_outliers": false,
     "early_fusion": false,
     "overwrite": true,
-    "parallel": false,
+    "parallel": true,
     "n_seeds_test": 0,
     "bootstrap_method": "bca",
     "round_values": false,
     "add_dem": false,
     "cut_values": -1.0,
     "regress_out": [
-        "age",
-        "education",
-        "sex"
+        ""
     ],
     "regress_out_method": "linear",
     "test_size": 0.0,
-    "data_file": "mean_pitch_features_CN_AD.csv",
+    "data_file": "mean_pitch_features_windows_CN_AD.csv",
     "tasks": [
         "Fugu"
     ],
@@ -64,15 +61,8 @@
     "random_seeds_test": [
         ""
     ],
-    "random_seeds_shuffle": [
-        ""
-    ],
     "bayes": true,
-    "covariates": [
-        "age",
-        "sex",
-        "education"
-    ],
+    "covariates": [],
     "problem_type": "clf",
     "kfold_folder": "5_folds_5_folds",
     "scoring_metric": "roc_auc"

@@ -59,7 +59,7 @@ class Model():
         if hasattr(self.model,'precompute'):
             self.model.precompute = True
         
-        if covariates:
+        if covariates is not None:
             
             self.regress_out_model = dict((feature,None) for feature in X_t.columns)
 
@@ -795,7 +795,7 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
         IDs_val_r = np.full(n_samples,fill_value='nan',dtype=object)
         
         model = Model(model_class,scaler,imputer,calmethod,calparams)
-        for k,(train_index_out,test_index_out) in enumerate(iterator_outer.split(X,strat_col)): 
+        for k,(train_index_out,test_index_out) in enumerate(iterator_outer.split(X,strat_col,IDs)): 
             X_dev, X_test = X.loc[train_index_out], X.loc[test_index_out]
             y_dev, y_test = y[train_index_out], y[test_index_out]
             if covariates is not None:

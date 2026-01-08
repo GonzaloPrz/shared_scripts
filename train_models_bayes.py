@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-from sklearn.model_selection import LeaveOneGroupOut, StratifiedGroupShuffleSplit, GroupShuffleSplit, StratifiedGroupKFold, GroupKFold
+from sklearn.model_selection import LeaveOneGroupOut, StratifiedShuffleSplit, GroupShuffleSplit, StratifiedGroupKFold, GroupKFold
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn.svm import SVC, SVR
 from sklearn.neighbors import KNeighborsClassifier as KNNC
@@ -31,7 +31,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='MCI_classifier_unbalanced',type=str,help='Project name')
+    parser.add_argument('--project_name', default='affective_pitch_CN_AD',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
-    parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
+    parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
     parser.add_argument('--id_col', type=str, default='id', help='ID column name')
@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='sex_age_education',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
     parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
@@ -316,7 +316,7 @@ for task in tasks:
                     n_samples_outer = n_samples_dev - 1
                     config["kfold_folder"] = 'loocv'
                 elif n_folds_outer < 1:
-                    CV_outer = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds_outer)
+                    CV_outer = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds_outer)
                                 if strat_col is not None
                                 else GroupShuffleSplit(n_splits=1,test_size=n_folds_outer))
                     n_samples_outer = int(n_samples_dev*(1-n_folds_outer))
@@ -342,7 +342,7 @@ for task in tasks:
                     config["kfold_folder"] += '_loocv'
                     n_max = n_samples_outer - 1
                 elif n_folds_inner < 1:
-                    CV_inner = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds_inner)
+                    CV_inner = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds_inner)
                                 if strat_col is not None
                                 else GroupShuffleSplit(n_splits=1,test_size=n_folds_inner))
                     n_max = int(n_samples_outer*(1-n_folds_inner))
@@ -469,7 +469,7 @@ for task in tasks:
                                                                                         calmethod=calmethod,
                                                                                         calparams=calparams,
                                                                                         round_values=round_values,
-                                                                                        covariates=covariates_ if isinstance(covariates_,pd.DataFrame) else None,
+                                                                                        covariates=covariates_ if covariates_.shape[1] > 0 else None,
                                                                                         fill_na = fill_na,
                                                                                         regress_out_method = config['regress_out_method']
                                                                                         )
