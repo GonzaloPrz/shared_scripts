@@ -1,5 +1,5 @@
 {
-    "project_name": "affective_pitch_CN_AD",
+    "project_name": "continuo_ivo",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
@@ -17,8 +17,8 @@
     "n_boot_test": 1000.0,
     "n_boot_train": 0.0,
     "filter_outliers": false,
-    "early_fusion": false,
-    "overwrite": true,
+    "early_fusion": true,
+    "overwrite": false,
     "parallel": true,
     "n_seeds_test": 0,
     "bootstrap_method": "bca",
@@ -30,19 +30,26 @@
     ],
     "regress_out_method": "linear",
     "test_size": 0.0,
-    "data_file": "mean_pitch_features_windows_CN_AD.csv",
+    "data_file": "all_data.csv",
     "tasks": [
-        "Fugu"
+        "fas",
+        "animales",
+        "fas__animales",
+        "grandmean"
     ],
     "single_dimensions": [
-        "ALL",
-        "NEG",
-        "NEU",
-        "POS",
-        "sentiment"
+        "granularity",
+        "concreteness",
+        "psycholinguistic",
+        "osv",
+        "phonological",
+        "speech_timing"
     ],
     "y_labels": [
-        "group"
+        "norm_vol_bilateral_HIP",
+        "norm_vol_mask_AD",
+        "ACEIII_Total_Score",
+        "IFS_Total_Score"
     ],
     "avoid_stats": [],
     "stat_folder": "",
@@ -63,7 +70,7 @@
     ],
     "bayes": true,
     "covariates": [],
-    "problem_type": "clf",
+    "problem_type": "reg",
     "kfold_folder": "5_folds_5_folds",
-    "scoring_metric": "roc_auc"
+    "scoring_metric": "r2"
 }

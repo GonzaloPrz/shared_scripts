@@ -17,13 +17,13 @@
                     "MiniSea_MiniSea_Total_EkmanFaces",
                     "MiniSea_minisea_total"
                 ],
-                "GERO_Ivo": [
+                "continuo_ivo": [
                     "norm_vol_bilateral_HIP",
                     "norm_vol_mask_AD",
                     "ACEIII_Total_Score",
                     "IFS_Total_Score"
                 ],
-                "GERO_Ivo_competence":
+                "continuo_ivo_competence":
                 {"brain":[
                     "nps__nps__IFS_Total_Score",
                     "nps__nps__ACEIII_Total_Score"],
@@ -83,13 +83,13 @@
             
                 "ad_mci_hc_group_as_feature": ["fugu"],
                 "GeroApathy_reg": ["agradable"],
-                "GERO_Ivo": [
+                "continuo_ivo": [
                     "fas",
                     "animales",
                     "fas__animales",
-                    "grandmean"
+                    "mean"
                 ],
-                "GERO_Ivo_competence":["brain","nps"],
+                "continuo_ivo_competence":["brain","nps"],
                 "MPLS": [
                     "estado_general",
                     "estado_general_2",
@@ -112,9 +112,9 @@
     
     "single_dimensions": {
                     "crossling_mci":["all"],
-                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment"],
-                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment"],
-                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment"],
+                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
+                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
+                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
                                 "pais":["phq9__sentiment__verbosity"],
@@ -187,10 +187,10 @@
                                     "mlu__verbosity__word_properties__talking_intervals",
                                     "universal_dependencies__verbosity__word_properties__talking_intervals"],
                     
-                    "GERO_Ivo": ["psycholinguistic",
+                    "continuo_ivo": ["granularity","concreteness","psycholinguistic","osv","phonological",
                                 "speech_timing"],
 
-                    "GERO_Ivo_competence": {"brain": ["brain"],
+                    "continuo_ivo_competence": {"brain": ["brain"],
                                 "nps": ["nps"]
                                 },
 
@@ -218,7 +218,7 @@
                 "MCI_classifier": "data_matched_group.csv",
                 "Proyecto_Ivo": "all_data_with_means.csv",
                 "arequipa": "data_matched_group.csv",
-                "GERO_Ivo": "all_data.csv",
+                "continuo_ivo": "all_data.csv",
                 "MPLS": "all_data.csv",
                 "arequipa_reg": "data_matched_group.csv",
                 "tea_tomi_chu":"solo_columnas_clasificador_formateadas.csv",
@@ -246,8 +246,8 @@
             "crossling_mci": ["age","sex","education"],
             "53_ceac": [],
             "arequipa_reg":["age","education","group","sex"],
-            "GERO_Ivo": ["age"],
-            "GERO_Ivo_competence": ["age"]
+            "continuo_ivo": ["age"],
+            "continuo_ivo_competence": ["age"]
     },
 
     "cmatrix":{

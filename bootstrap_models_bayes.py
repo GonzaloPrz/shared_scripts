@@ -1,9 +1,8 @@
 import pandas as pd
-import pickle
 from pathlib import Path
 from expected_cost.utils import *
 import itertools
-import sys,json
+import json
 import numpy as np
 from scipy.stats import bootstrap
 
@@ -82,7 +81,7 @@ for task in tasks:
 
     dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
     for dimension in dimensions:
-        #print(dimension)
+        print(dimension)
         if isinstance(y_labels,dict):
             y_labels_ = y_labels[task]
         else:
@@ -113,7 +112,7 @@ for task in tasks:
                     models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
                     
                     for model_type in models:
-                        #print(model_type)
+                        print(model_type)
                         if not overwrite and all_results.shape[0] > 0:
                             row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label)]
                             if len(row) > 0:

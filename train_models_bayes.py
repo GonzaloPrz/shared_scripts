@@ -147,7 +147,7 @@ config['tasks'] = tasks
 config['single_dimensions'] = single_dimensions    
 
 config['y_labels'] = y_labels
-config['avoid_stats'] = list(set(['min','max','median','skewness','kurtosis','std','mean','stddev']) - set(config['stats'].split('_'))) if config['stats'] != '' else []
+config['avoid_stats'] = list(set(['min','max','median','skew','kurt','std','mean']) - set(config['stats'].split('_'))) if config['stats'] != '' else []
 config['stat_folder'] = '_'.join(sorted(config['stats'].split('_')))
 
 config['random_seeds_train'] = [int(3**x) for x in np.arange(1, config['n_seeds_train']+1)]
@@ -212,7 +212,7 @@ for task in tasks:
 
             all_data = all_data.loc[:, ~all_data.columns.str.match(r'^Unnamed')]
 
-            features = [col for col in all_data.columns if any(f'{x}__{y}__' in col for x,y in itertools.product(task.split('__'),dimension.split('__'))) and 'timestamp' not in col]
+            features = [col for col in all_data.columns if any(f'{x}__{y}' in col for x,y in itertools.product(task.split('__'),dimension.split('__'))) and 'timestamp' not in col]
 
             if len(config["avoid_stats"]) > 0:
                 features = [col for col in features if all(f'_{x}' not in col for x in config['avoid_stats'])]

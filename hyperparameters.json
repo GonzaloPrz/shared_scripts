@@ -2,7 +2,6 @@
 
 "rf":{"max_depth":[1,10],
 "n_estimators":[1,500],
-"min_sample_split":[2,10],
 "min_samples_leaf":[1,10]},
 
 "svc":{"C":[1e-4,100],

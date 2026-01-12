@@ -53,7 +53,9 @@ class Model():
         if 'max_iter' in params.keys():
             params['max_iter'] = int(params['max_iter']) if params['max_iter'] is not None else None
         if 'gpu_id' in params.keys():
-                params['gpu_id'] = None
+            params['gpu_id'] = None
+        if 'min_samples_leaf' in params.keys():
+            params['min_samples_leaf'] = int(params['min_samples_leaf'])
                 
         self.model.set_params(**params)
         if hasattr(self.model,'precompute'):
