@@ -187,8 +187,13 @@
                                     "mlu__verbosity__word_properties__talking_intervals",
                                     "universal_dependencies__verbosity__word_properties__talking_intervals"],
                     
-                    "continuo_ivo": ["granularity","concreteness","psycholinguistic","osv","phonological",
-                                "speech_timing"],
+                    "continuo_ivo": [
+                                    "speech_timing",
+                                    "concr",
+                                    "granularity",
+                                    "phonol",
+                                    "psych",
+                                    "osv"],
 
                     "continuo_ivo_competence": {"brain": ["brain"],
                                 "nps": ["nps"]

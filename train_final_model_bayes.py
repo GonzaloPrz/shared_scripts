@@ -9,11 +9,12 @@ from sklearn.linear_model import LogisticRegression as LR
 from sklearn.svm import SVC, SVR
 from xgboost import XGBClassifier as xgboost
 from xgboost import XGBRegressor as xgboostr
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis as QDA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.neighbors import KNeighborsClassifier as KNNC
 from sklearn.neighbors import KNeighborsRegressor as KNNR
-from sklearn.model_selection import StratifiedGroupKFold, GroupKFold, LeaveOneGroupOut, StratifiedGroupShuffleSplit, GroupShuffleSplit
+from sklearn.model_selection import StratifiedGroupKFold, GroupKFold, LeaveOneGroupOut, StratifiedShuffleSplit, GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
@@ -79,6 +80,7 @@ models_dict = {'clf':{
                     'lr':LR,
                     'knnc':KNNC,
                     'xgb':xgboost,
+                    'rf':RandomForestClassifier,
                     'svc':SVC,
                     'qda':QDA,
                     'lda': LDA
@@ -87,6 +89,7 @@ models_dict = {'clf':{
                 'reg':{'lasso':Lasso,
                     'ridge':Ridge,
                     'elastic':ElasticNet,
+                    'rf':RandomForestRegressor,
                     'knnr':KNNR,
                     'svr':SVR,
                     'xgb':xgboostr
@@ -155,6 +158,7 @@ for threshold in thresholds:
                     outputs_dev = np.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.npy'),'rb'),allow_pickle=True)
                     
                     IDs = np.load(open(Path(path_to_results,random_seed,'IDs_dev.npy'),'rb'),allow_pickle=True)
+                    IDs_train = np.load(open(Path(path_to_results,random_seed,'IDs_train.npy'),'rb'),allow_pickle=True)
                 except:
                     y_dev = pickle.load(open(Path(path_to_results,random_seed,'y_dev.pkl'),'rb'))
                     X_train = pickle.load(open(Path(path_to_results,random_seed,'X_train.pkl'),'rb'))
@@ -162,6 +166,7 @@ for threshold in thresholds:
                     outputs_dev = pickle.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.pkl'),'rb'))
                     
                     IDs = pickle.load(open(Path(path_to_results,random_seed,'IDs_dev.pkl'),'rb'))
+                    IDs_train = pickle.load(open(Path(path_to_results,random_seed,'IDs_train.pkl'),'rb'))
                 
                 if problem_type == 'reg':
                     y_pred = np.round(outputs_dev,decimals=0) if config['round_values'] else outputs_dev
@@ -269,7 +274,7 @@ for threshold in thresholds:
                     CV = LeaveOneGroupOut()
                     n_max = X_train.shape[0] - 1
                 elif n_folds < 1:
-                    CV = (StratifiedGroupShuffleSplit(n_splits=1,test_size=n_folds)
+                    CV = (StratifiedShuffleSplit(n_splits=1,test_size=n_folds)
                                 if config['stratify'] and problem_type == 'clf'
                                 else GroupShuffleSplit(n_splits=1,test_size=n_folds))
                     n_max = int(X_train.shape[0]*(1-n_folds))
@@ -290,7 +295,7 @@ for threshold in thresholds:
                 
                 if int(config["n_iter"]):
                     try:
-                        best_params, best_score = utils.tuning(model_class,scaler,imputer,X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,hyperp[model_type],CV,init_points=int(config['init_points']),n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,calmethod=None,calparams=None)
+                        best_params, best_score = utils.tuning(model_class,scaler,imputer,X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,hyperp[model_type],CV,init_points=int(config['init_points']),n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,calmethod=None,calparams=None,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])
                     except Exception as e:
                         print(e)
                         continue
@@ -305,26 +310,27 @@ for threshold in thresholds:
 
                 model = utils.Model(model_class(**best_params),scaler,imputer)
                 
-                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold)[0] if feature_selection else X_train.columns
+                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])[0] if feature_selection else X_train.columns
                 
                 model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train)
 
-                shap_values = utils.run_shap_analysis(model,X_train[best_features],y_train,CV,fill_na=config['fill_na'])
+                shap_values = utils.run_shap_analysis(model,X_train[best_features],y_train,IDs_train,CV,fill_na=config['fill_na'])
 
-                feature_importance_file = f'shap_feature_importance_{model_type}_shuffled_calibrated.csv'.replace('__','_')
-                feature_importance_fig_file = feature_importance_file.replace('.csv','png')
+                feature_importance_file = f'shap_feature_importance_{model_type}_{task}_{dimension}_{y_label}_{model_type}_shuffled_calibrated.csv'.replace('__','_')
 
                 if not shuffle_labels:
                     feature_importance_file = feature_importance_file.replace('_shuffled','')
                 if not calibrate:
                     feature_importance_file = feature_importance_file.replace('_calibrated','')
 
+                feature_importance_fig_file = feature_importance_file.replace('.csv','.png')
+
                 Path(results_dir).mkdir(parents=True, exist_ok=True)
                 
                 Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed).mkdir(parents=True,exist_ok=True)
                 Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed).mkdir(parents=True,exist_ok=True)
                 mean_shap_values = shap_values.mean()
-                mean_shap_values.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file),index=False)
+                mean_shap_values.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file))
                 # Summary Plot (Beeswarm) - El más importante para papers
                 plt.figure(figsize=(10, 8))
                 shap.summary_plot(shap_values.values.astype(float), X_train[best_features], feature_names=best_features, show=False)

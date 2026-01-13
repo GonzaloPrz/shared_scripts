@@ -1221,7 +1221,7 @@ def regress_out_fn(
         name=f"{target_column}_residual",
     ), model
 
-def run_shap_analysis(model_wrapper, X_dev, y_dev, iterator,fill_na=0):
+def run_shap_analysis(model_wrapper, X_dev, y_dev, groups, iterator,fill_na=0):
     """
     Genera gráficos SHAP agnósticos al modelo (Linear, Tree, o Kernel).
     
@@ -1243,7 +1243,7 @@ def run_shap_analysis(model_wrapper, X_dev, y_dev, iterator,fill_na=0):
     shap_values = pd.DataFrame(columns=X_dev.columns,index=range(X_dev.shape[0]),dtype=float)
     
     try:
-        for train_index, val_index in iterator.split(X_dev,y_dev):
+        for train_index, val_index in iterator.split(X_dev,y_dev,groups):
             X_train = X_dev.loc[train_index]
             X_val = X_dev.loc[val_index]
 
@@ -1259,8 +1259,8 @@ def run_shap_analysis(model_wrapper, X_dev, y_dev, iterator,fill_na=0):
             # B. Modelos Lineales (LogisticRegression, Ridge, Lasso, SVM-Linear) -> LinearExplainer
             elif 'Linear' in model_type or 'Logistic' in model_type or 'Ridge' in model_type or 'Lasso' in model_type:
                 # LinearExplainer necesita un "background" para comparar (usamos X_train resumen)
-                background = shap.kmeans(X_train, 100) # Resumen de 100 puntos para velocidad
-                explainer = shap.LinearExplainer(model_wrapper.model, background)
+                masker = shap.maskers.Independent(X_train)
+                explainer = shap.LinearExplainer(model_wrapper.model, masker)
                 shap_values.loc[val_index] = explainer.shap_values(X_val)
 
             # C. Modelos Kernel/Caja Negra (SVM-RBF, KNN) -> KernelExplainer (Lento pero universal)
@@ -1275,7 +1275,7 @@ def run_shap_analysis(model_wrapper, X_dev, y_dev, iterator,fill_na=0):
                     nan_mask = np.isnan(X_train.values)
                     X_train.loc[nan_mask] = fill_na
 
-                background = shap.kmeans(X_train, 50) 
+                background = shap.kmeans(X_train, np.min((50,X_train.shape[0]))) 
                 
                 # Nota: KernelExplainer necesita la función de predicción de probabilidad si es clf
                 

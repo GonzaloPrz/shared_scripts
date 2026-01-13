@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Activate virtual environment
-source "/Users/gp/gonza-env/Scripts/activate"
+source "/Users/gp/miniconda3/envs/ml-env/bin/activate"
 
 # Run Python scripts with all passed arguments
 python "/Users/gp/scripts/shared/train_models_bayes.py" "$@"
