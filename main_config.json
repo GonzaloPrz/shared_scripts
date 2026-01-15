@@ -112,9 +112,9 @@
     
     "single_dimensions": {
                     "crossling_mci":["all"],
-                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
-                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
-                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment"],
+                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
+                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
+                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
                                 "pais":["phq9__sentiment__verbosity"],
@@ -189,11 +189,11 @@
                     
                     "continuo_ivo": [
                                     "speech_timing",
-                                    "concr",
-                                    "granularity",
-                                    "phonol",
-                                    "psych",
-                                    "osv"],
+                                    "concr__granularity__phonol__psych__osv",
+                                    "speech_timing__concr__granularity__phonol__psych__osv",
+                                    "granularity__psych",
+                                    "speech_timing__granularity__psych"
+                                    ],
 
                     "continuo_ivo_competence": {"brain": ["brain"],
                                 "nps": ["nps"]

@@ -173,7 +173,7 @@ models_dict = {'clf':{
                 'reg':{'lasso':Lasso,
                     'ridge':Ridge,
                     'elastic':ElasticNet,
-                    'rf':RandomForestRegressor
+                    #'rf':RandomForestRegressor
                     #'knnr':KNNR,
                     #'svr':SVR,
                     #'xgb':xgboostr

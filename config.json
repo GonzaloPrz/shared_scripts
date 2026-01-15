@@ -7,17 +7,17 @@
     "n_folds_outer": 5.0,
     "n_folds_inner": 5.0,
     "n_iter": 15.0,
-    "feature_selection": false,
+    "feature_selection": true,
     "fill_na": -10,
     "init_points": 15.0,
-    "n_seeds_train": 10.0,
+    "n_seeds_train": 1.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
     "n_boot_test": 1000.0,
     "n_boot_train": 0.0,
     "filter_outliers": false,
-    "early_fusion": true,
+    "early_fusion": false,
     "overwrite": false,
     "parallel": true,
     "n_seeds_test": 0,
@@ -39,11 +39,10 @@
     ],
     "single_dimensions": [
         "speech_timing",
-        "concr",
-        "granularity",
-        "phonol",
-        "psych",
-        "osv"
+        "concr__granularity__phonol__psych__osv",
+        "speech_timing__concr__granularity__phonol__psych__osv",
+        "granularity__psych",
+        "speech_timing__granularity__psych"
     ],
     "y_labels": [
         "norm_vol_bilateral_HIP",
@@ -54,16 +53,7 @@
     "avoid_stats": [],
     "stat_folder": "",
     "random_seeds_train": [
-        3,
-        9,
-        27,
-        81,
-        243,
-        729,
-        2187,
-        6561,
-        19683,
-        59049
+        3
     ],
     "random_seeds_test": [
         ""
