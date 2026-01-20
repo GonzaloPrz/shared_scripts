@@ -31,17 +31,17 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='affective_pitch_CN_AD',type=str,help='Project name')
+    parser.add_argument('--project_name', default='Proyecto_Ivo',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
-    parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
-    parser.add_argument('--n_folds_inner', type=float, default=5, help='Number of folds for cross validation (inner loop)')
+    parser.add_argument('--n_folds_outer', type=float, default=3, help='Number of folds for cross validation (outer loop)')
+    parser.add_argument('--n_folds_inner', type=float, default=11, help='Number of folds for cross validation (inner loop)')
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
-    parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
+    parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
     parser.add_argument('--id_col', type=str, default='id', help='ID column name')
@@ -50,15 +50,15 @@ def parse_args():
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
     parser.add_argument('--early_fusion',type=int,default=0,help='Whether to perform early fusion')
-    parser.add_argument('--overwrite',type=int,default=1,help='Whether to overwrite past results or not')
-    parser.add_argument('--parallel',type=int,default=0,help='Whether to parallelize processes or not')
+    parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
+    parser.add_argument('--parallel',type=int,default=1,help='Whether to parallelize processes or not')
     parser.add_argument('--n_seeds_test',type=int,default=1,help='Number of seeds for testing')
     parser.add_argument('--bootstrap_method',type=str,default='bca',help='Bootstrap method [bca, percentile, basic]')
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
-    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
+    parser.add_argument('--regress_out',type=str,default='sex_age',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out_method',type=str,default='non_linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
 def load_configuration(args):
@@ -231,8 +231,11 @@ for task in tasks:
                 dimension = dimension + '__dem' if dimension != '' else 'dem'
             
             print(task,dimension)
+            if len(covariates) != 0:
+                all_data = all_data.dropna(subset=covariates,how='any').reset_index(drop=True)
+            
             data = all_data[features + [y_label, config['id_col']]]
-            data.dropna(axis=1,how='all',inplace=True)
+            data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
             data.dropna(subset=y_label,inplace=True)
             if cut_values > 0:
                 data = data[data[y_label] <= cut_values]
@@ -285,9 +288,12 @@ for task in tasks:
                 strat_col = None
             
             covariates_ = all_data[covariates]
-            if covariates_.shape[0] != 0:
-                all_data.dropna(subset=covariates,inplace=True)
+
+            for covariate in covariates:
+                if not isinstance(covariates_[covariate],(int,float)):
+                    covariates_[covariate] = LabelEncoder().fit_transform(covariates_[covariate])
             
+
             for model_key, model_class in models_dict[config['problem_type']].items():        
                 print(model_key)
                 

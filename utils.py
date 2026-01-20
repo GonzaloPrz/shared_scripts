@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.svm import SVR, SVC
 from pathlib import Path
 from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.preprocessing import LabelEncoder
 
 from expected_cost.ec import *
 from expected_cost.utils import *
@@ -66,7 +67,7 @@ class Model():
             self.regress_out_model = dict((feature,None) for feature in X_t.columns)
 
             for feature in X_t.columns:
-                feature_, model = regress_out_fn(data=pd.concat(X_t,covariates,axis=1),target_column=feature,covariate_columns=covariates.columns,method=regress_out_method)
+                feature_, model = regress_out_fn(data=pd.concat((X_t,covariates),axis=1),target_column=feature,covariate_columns=covariates.columns,method=regress_out_method)
                 X_t[feature] = feature_
                 self.regress_out_model[feature] = model
 
@@ -798,23 +799,21 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
         
         model = Model(model_class,scaler,imputer,calmethod,calparams)
         for k,(train_index_out,test_index_out) in enumerate(iterator_outer.split(X,strat_col,IDs)): 
-            X_dev, X_test = X.loc[train_index_out], X.loc[test_index_out]
+            X_dev, X_test = X.loc[train_index_out].reset_index(drop=True), X.loc[test_index_out].reset_index(drop=True)
             y_dev, y_test = y[train_index_out], y[test_index_out]
             if covariates is not None:
-                covariates_dev= covariates.iloc[train_index_out]
-                covariates_test = covariates.iloc[test_index_out]
+                covariates_dev= covariates.loc[train_index_out].reset_index(drop=True)
+                covariates_test = covariates.loc[test_index_out].reset_index(drop=True)
+
             else:
                 covariates_dev = None
                 covariates_test = None
 
-            X_dev = X_dev.reset_index(drop=True)
-            X_test = X_test.reset_index(drop=True)
-            
             y_true_r[test_index_out] = y_test
             
-            IDs_dev = IDs[train_index_out]
+            IDs_dev = IDs.loc[train_index_out].reset_index(drop=True)
             
-            IDs_val_r[test_index_out] = IDs[test_index_out]
+            IDs_val_r[test_index_out] = IDs.loc[test_index_out].reset_index(drop=True)
 
             #scaler_ = scaler().fit(X_dev)
             #imputer_ = imputer().fit(X_dev)
@@ -826,7 +825,7 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
             print(f'Random seed {r+1}, Fold {k+1}')
             
             if n_iter > 0:
-                best_params, best_score = tuning(model_class,scaler,imputer,X_dev,y_dev,IDs_dev,hyperp_space,iterator_inner,init_points=init_points,n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=priors,threshold=threshold,calmethod=calmethod,calparams=calparams,round_values=round_values,covariates=covariates,fill_na=fill_na,regress_out_method=regress_out_method)
+                best_params, best_score = tuning(model_class,scaler,imputer,X_dev,y_dev,IDs_dev,hyperp_space,iterator_inner,init_points=init_points,n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=priors,threshold=threshold,calmethod=calmethod,calparams=calparams,round_values=round_values,covariates=covariates_dev,fill_na=fill_na,regress_out_method=regress_out_method)
             else:
                 best_params = model_class().get_params() 
 
@@ -845,7 +844,7 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
                 best_params['probability'] = True
 
             if feature_selection:
-                best_features, best_score = rfe(Model(model_class(**best_params),scaler,imputer,calmethod,calparams),X_dev,y_dev.values if isinstance(y_dev,pd.Series) else y_dev,IDs_dev,iterator_inner,scoring,problem_type,cmatrix=cmatrix,priors=priors,threshold=threshold,round_values=round_values,covariates=covariates,fill_na=fill_na)
+                best_features, best_score = rfe(Model(model_class(**best_params),scaler,imputer,calmethod,calparams),X_dev,y_dev.values if isinstance(y_dev,pd.Series) else y_dev,IDs_dev,iterator_inner,scoring,problem_type,cmatrix=cmatrix,priors=priors,threshold=threshold,round_values=round_values,covariates=covariates_dev,fill_na=fill_na)
             else:
                 best_features, best_score = X.columns, np.nan
 
@@ -932,13 +931,13 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
     y_true = np.full(X.shape[0],fill_value=np.nan)
 
     for train_index, val_index in iterator.split(X, y, groups):
-        X_train = X.iloc[train_index]
-        X_val = X.iloc[val_index]
+        X_train = X.loc[train_index]
+        X_val = X.loc[val_index]
         y_train, y_val = y[train_index], y[val_index]
         
         if covariates is not None:
-            covariates_train = covariates.iloc[train_index]
-            covariates_val = covariates.iloc[val_index]
+            covariates_train = covariates.loc[train_index].reset_index(drop=True)
+            covariates_val = covariates.loc[val_index].reset_index(drop=True)
         else:
             covariates_train, covariates_val = None, None
 
@@ -985,8 +984,8 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
                 X_val = X.iloc[val_index][[f for f in features if f != feature]]
                 y_train, y_val = y[train_index], y[val_index]
                 if covariates is not None:
-                    covariates_train = covariates.iloc[train_index]
-                    covariates_val = covariates.iloc[val_index]
+                    covariates_train = covariates.loc[train_index].reset_index(drop=True)
+                    covariates_val = covariates.loc[val_index].reset_index(drop=True)
                 else:
                     covariates_train = None
 
@@ -1123,13 +1122,13 @@ def scoring_bo(params,model_class,scaler,imputer,X,y,groups,iterator,scoring,pro
     for train_index, test_index in iterator.split(X,y,groups):
         model = Model(model_class(**params),scaler,imputer,calmethod,calparams)
         if covariates is not None:
-            covariates_train = covariates.iloc[train_index]
-            covariates_val = covariates.iloc[test_index]
+            covariates_train = covariates.loc[train_index].reset_index(drop=True)
+            covariates_val = covariates.loc[test_index].reset_index(drop=True)
         else:
             covariates_train, covariates_val = None, None
 
-        model.train(X.loc[train_index],y[train_index],covariates_train,fill_na,regress_out_method)
-        outputs[test_index] = model.eval(X.loc[test_index],problem_type,covariates_val,fill_na)
+        model.train(X.loc[train_index].reset_index(drop=True),y[train_index],covariates_train,fill_na,regress_out_method)
+        outputs[test_index] = model.eval(X.loc[test_index].reset_index(drop=True),problem_type,covariates_val,fill_na)
 
         if problem_type == 'clf':
             if isinstance(threshold,float) & (len(np.unique(y)) == 2):
@@ -1206,9 +1205,9 @@ def regress_out_fn(
     """
     Ajusta y = beta0 + betaX y devuelve los residuos (y - y_hat).
     """
-    covariate_matrix = data[covariate_columns].to_numpy(dtype=float)
-    target_vector = data[target_column].to_numpy(dtype=float)
-    model = LinearRegression(random_state=42) if method == 'linear' else RandomForestRegressor(random_state=42)
+    covariate_matrix = data[covariate_columns]
+    target_vector = data[target_column]
+    model = LinearRegression() if method == 'linear' else RandomForestRegressor(random_state=42)
     
     model.fit(covariate_matrix,target_vector)
 

@@ -250,9 +250,9 @@ for threshold in thresholds:
                         continue
                     plt.close()
 
-                #if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'model_{model_type}.npy').exists() and not overwrite:
-                #    print('Model already exists')
-                #    continue
+                if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'model_{model_type}.npy').exists() and not overwrite:
+                    print('Model already exists')
+                    continue
                 
                 if not Path(path_to_results,random_seed,f'all_models_{model_type}.csv').exists():
                     continue

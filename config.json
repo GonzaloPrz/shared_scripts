@@ -1,16 +1,16 @@
 {
-    "project_name": "continuo_ivo",
+    "project_name": "Proyecto_Ivo",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
-    "n_folds_outer": 5.0,
-    "n_folds_inner": 5.0,
-    "n_iter": 15.0,
+    "n_folds_outer": 3.0,
+    "n_folds_inner": 11.0,
+    "n_iter": 20.0,
     "feature_selection": true,
-    "fill_na": -10,
-    "init_points": 15.0,
-    "n_seeds_train": 1.0,
+    "fill_na": 0,
+    "init_points": 20.0,
+    "n_seeds_train": 10.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
@@ -26,41 +26,60 @@
     "add_dem": false,
     "cut_values": -1.0,
     "regress_out": [
-        ""
+        "age",
+        "sex"
     ],
-    "regress_out_method": "linear",
+    "regress_out_method": "non_linear",
     "test_size": 0.0,
-    "data_file": "all_data.csv",
+    "data_file": "all_data_with_means.csv",
     "tasks": [
-        "fas",
-        "animales",
-        "fas__animales",
-        "mean"
+        "nps",
+        "Animales__P",
+        "brain",
+        "connectivity"
     ],
-    "single_dimensions": [
-        "speech_timing",
-        "concr__granularity__phonol__psych__osv",
-        "speech_timing__concr__granularity__phonol__psych__osv",
-        "granularity__psych",
-        "speech_timing__granularity__psych"
-    ],
+    "single_dimensions": {
+        "Animales__P": [
+            "properties"
+        ],
+        "nps": [
+            "executive"
+        ],
+        "brain": [
+            "norm_brain_lit",
+            "norm_AAL"
+        ],
+        "connectivity": [
+            "networks",
+            "selected_areas"
+        ]
+    },
     "y_labels": [
-        "norm_vol_bilateral_HIP",
-        "norm_vol_mask_AD",
-        "ACEIII_Total_Score",
-        "IFS_Total_Score"
+        "target"
     ],
     "avoid_stats": [],
     "stat_folder": "",
     "random_seeds_train": [
-        3
+        3,
+        9,
+        27,
+        81,
+        243,
+        729,
+        2187,
+        6561,
+        19683,
+        59049
     ],
     "random_seeds_test": [
         ""
     ],
     "bayes": true,
-    "covariates": [],
-    "problem_type": "reg",
-    "kfold_folder": "5_folds_5_folds",
-    "scoring_metric": "r2"
+    "covariates": [
+        "age",
+        "sex"
+    ],
+    "problem_type": "clf",
+    "kfold_folder": "3_folds_11_folds",
+    "scoring_metric": "roc_auc"
 }
