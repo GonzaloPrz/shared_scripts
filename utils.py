@@ -130,7 +130,7 @@ def _build_path(base_dir, task, dimension, y_label, random_seed_test, file_name,
     shuffle_str = "shuffle" if config["shuffle_labels"] else ""
 
     return Path(base_dir,task, dimension, config['kfold_folder'], 
-           y_label, config["stat_folder"], scoring if bayes else '', hyp_opt_str, feature_sel_str, outlier_str, round_str, cut_str,shuffle_str,random_seed_test, file_name)
+           y_label, config["stat_folder"], scoring if bayes else '', hyp_opt_str, feature_sel_str, outlier_str, round_str, cut_str,shuffle_str,config["version"],random_seed_test, file_name)
 
 def _load_data(results_dir, task, dimension, y_label, model_type, random_seed_test, config, bayes=False,scoring=None):
     """Loads model outputs and true labels for a given configuration."""

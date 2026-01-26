@@ -112,7 +112,7 @@ for threshold in thresholds:
     if str(threshold) == 'None':
         threshold = None
 
-    ending = f'_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
+    ending = f'_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
     if not hyp_opt:
         ending = ending.replace('_hyp_opt','')
     if not feature_selection:

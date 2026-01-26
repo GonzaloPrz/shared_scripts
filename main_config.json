@@ -112,9 +112,10 @@
     
     "single_dimensions": {
                     "crossling_mci":["all"],
-                    "affective_pitch_CN_AD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
-                    "affective_pitch_CN_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
-                    "affective_pitch_AD_FTD": ["ALL","NEG","NEU","POS","sentiment","ALL__sentiment","NEG__sentiment","NEU__sentiment","POS__sentiment","pitch_baseline"],
+                    "affective_pitch_CN_AD": ["ALL_pysent__sentiment_pysent","NEG_pysent__sentiment_pysent","NEU_pysent__sentiment_pysent","POS_pysent__sentiment_pysent",
+                                              "ALL_gemini__sentiment_gemini","NEG_gemini__sentiment_gemini","NEU_gemini__sentiment_gemini","POS_gemini__sentiment_gemini"],
+                    "affective_pitch_CN_FTD": ["ALL_pysent__sentiment_pysent","NEG_pysent__sentiment_pysent","NEU_pysent__sentiment","POS_pysent__sentiment_pysent",
+                                                "ALL_gemini__sentiment_gemini","NEG_gemini__sentiment_gemini","NEU_gemini__sentiment_gemini","POS_gemini__sentiment_gemini" ],
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
                                 "pais":["phq9__sentiment__verbosity"],
@@ -213,9 +214,9 @@
 
     "data_file": {
                 "crossling_mci":"data_french.csv",
-                "affective_pitch_CN_AD": "mean_pitch_features_windows_CN_AD.csv",
-                "affective_pitch_CN_FTD": "mean_pitch_features_windows_CN_FTD.csv",
-                "affective_pitch_AD_FTD": "mean_pitch_features_windows_AD_FTD.csv",
+                "affective_pitch_CN_AD": "mean_pitch_features_phrases_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_pitch_features_phrases_CN_FTD.csv",
+                "affective_pitch_AD_FTD": "mean_pitch_features_phrases_AD_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",
                 "tell_classifier": "data_MOTOR-LIBRE.csv",

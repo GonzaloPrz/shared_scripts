@@ -1,16 +1,16 @@
 {
-    "project_name": "Proyecto_Ivo",
+    "project_name": "affective_pitch_CN_FTD",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
-    "n_folds_outer": 3.0,
-    "n_folds_inner": 11.0,
+    "n_folds_outer": 5.0,
+    "n_folds_inner": 10.0,
     "n_iter": 20.0,
     "feature_selection": true,
-    "fill_na": 0,
+    "fill_na": -10,
     "init_points": 20.0,
-    "n_seeds_train": 10.0,
+    "n_seeds_train": 1.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
@@ -26,60 +26,39 @@
     "add_dem": false,
     "cut_values": -1.0,
     "regress_out": [
-        "age",
-        "sex"
+        ""
     ],
     "regress_out_method": "non_linear",
     "test_size": 0.0,
-    "data_file": "all_data_with_means.csv",
+    "data_file": "mean_pitch_features_phrases_CN_FTD.csv",
     "tasks": [
-        "nps",
-        "Animales__P",
-        "brain",
-        "connectivity"
+        "Fugu"
     ],
-    "single_dimensions": {
-        "Animales__P": [
-            "properties"
-        ],
-        "nps": [
-            "executive"
-        ],
-        "brain": [
-            "norm_brain_lit",
-            "norm_AAL"
-        ],
-        "connectivity": [
-            "networks",
-            "selected_areas"
-        ]
-    },
+    "single_dimensions": [
+        "ALL_pysent__sentiment_pysent",
+        "NEG_pysent__sentiment_pysent",
+        "NEU_pysent__sentiment",
+        "POS_pysent__sentiment_pysent",
+        "ALL_gemini__sentiment_gemini",
+        "NEG_gemini__sentiment_gemini",
+        "NEU_gemini__sentiment_gemini",
+        "POS_gemini__sentiment_gemini"
+    ],
     "y_labels": [
-        "target"
+        "group"
     ],
     "avoid_stats": [],
     "stat_folder": "",
     "random_seeds_train": [
-        3,
-        9,
-        27,
-        81,
-        243,
-        729,
-        2187,
-        6561,
-        19683,
-        59049
+        3
     ],
     "random_seeds_test": [
         ""
     ],
     "bayes": true,
-    "covariates": [
-        "age",
-        "sex"
-    ],
+    "covariates": [],
     "problem_type": "clf",
-    "kfold_folder": "3_folds_11_folds",
+    "kfold_folder": "5_folds_10_folds",
+    "version": "v_1",
     "scoring_metric": "roc_auc"
 }

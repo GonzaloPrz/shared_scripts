@@ -26,6 +26,7 @@ filter_outliers = bool(config['filter_outliers'])
 round_values = bool(config['round_values'])
 cut_values = bool(config['cut_values'] > 0)
 regress_out = len(config['covariates']) > 0
+version = config['version']
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -52,7 +53,7 @@ scorings = [config["scoring_metric"]]
 
 tasks = [folder.name for folder in Path(results_dir).iterdir() if folder.is_dir() and folder.name not in ['plots','rocs','feature_importance_bayes','feature_importance','final_models_bayes','final_models']]
 
-output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
+output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
                 
 if not hyp_opt:
         output_filename = output_filename.replace('_hyp_opt','')
@@ -97,7 +98,7 @@ for task in tasks:
 
             for scoring in np.unique(scorings):
                 #print(scoring)
-                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "")
+                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "",version)
 
                 if not path.exists():
                     continue
@@ -148,7 +149,7 @@ for task in tasks:
                         try:
                             point_estimates = stat_func(data_indices[0])
                         except Exception as e:
-                            print(f"ERROR calculating metrics for {tasks}/{dimensions}/{y_label} with model {model_type}. Error: {e}")
+                            print(f"ERROR calculating metrics for {task}/{dimension}/{y_label} with model {model_type}. Error: {e}")
                             continue
                             
                         # 2. Calculate the bootstrap confidence interval
@@ -183,7 +184,7 @@ for task in tasks:
                             "dimension": dimension,
                             "y_label": y_label,
                             "model_type": model_type,
-                            "random_seed_test": random_seed,
+                            "random_seed_test": random_seed if random_seed != '' else np.nan,
                             "bootstrap_method_dev": bootstrap_method
                         }
                         
@@ -198,9 +199,9 @@ for task in tasks:
                             all_results.loc[all_results.shape[0],:] = result_row
 
                         all_results.to_csv(Path(results_dir,output_filename),index=False)
-    
+
 for scoring in np.unique(scorings):
-    output_filename = f'best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
+    output_filename = f'best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
 
     if not hyp_opt:
         output_filename = output_filename.replace('_hyp_opt','')
@@ -221,6 +222,8 @@ for scoring in np.unique(scorings):
         continue
 
     all_results = pd.read_csv(Path(results_dir,output_filename))
+
+    all_results['random_seed_test'] = all_results['random_seed_test'].astype(str).apply(lambda x: str(x).lower())
 
     best_best_models = pd.DataFrame(columns=all_results.columns)
 

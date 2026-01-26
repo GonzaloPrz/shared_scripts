@@ -31,17 +31,17 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='Proyecto_Ivo',type=str,help='Project name')
+    parser.add_argument('--project_name', default='affective_pitch_CN_FTD',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
-    parser.add_argument('--n_folds_outer', type=float, default=3, help='Number of folds for cross validation (outer loop)')
-    parser.add_argument('--n_folds_inner', type=float, default=11, help='Number of folds for cross validation (inner loop)')
+    parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
+    parser.add_argument('--n_folds_inner', type=float, default=0.2, help='Number of folds for cross validation (inner loop)')
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
-    parser.add_argument('--fill_na',type=int,default=0,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
+    parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=10,help='Number of seeds for cross-validation training')
     parser.add_argument('--scaler_name', type=str, default='StandardScaler', help='Scaler name')
     parser.add_argument('--id_col', type=str, default='id', help='ID column name')
@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='sex_age',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
     parser.add_argument('--regress_out_method',type=str,default='non_linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
@@ -235,7 +235,7 @@ for task in tasks:
                 all_data = all_data.dropna(subset=covariates,how='any').reset_index(drop=True)
             
             data = all_data[features + [y_label, config['id_col']]]
-            data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
+            #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
             data.dropna(subset=y_label,inplace=True)
             if cut_values > 0:
                 data = data[data[y_label] <= cut_values]
@@ -373,6 +373,31 @@ for task in tasks:
                 ]
 
                 path_to_save = results_dir.joinpath(*[str(s) for s in subfolders if s])
+                path_to_save.mkdir(parents=True, exist_ok=True)
+                
+                versions_dir = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
+
+                if len(versions_dir) == 0:
+                    version = 1
+                else:
+                    existing_versions = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
+
+                    for existing_version in existing_versions:
+                        try:
+                            data_file_ = json.load(open(Path(path_to_save,existing_version,'config.json')))['data_file']
+                        except:
+                            data_file_ = data_file
+                            config['data_file'] = data_file_
+                            
+                        if data_file_ == data_file:
+                            version = int(existing_version.split('_')[1])
+                            break       
+                    else:
+                        version = max([int(v.split('_')[1]) for v in existing_versions]) + 1
+
+                config['version'] = f'v_{version}'
+                path_to_save = path_to_save / config['version']
+                path_to_save.mkdir(parents=True, exist_ok=True)
 
                 if Path(path_to_save,'config.json').exists():
                     with open(Path(path_to_save,'config.json'), 'rb') as f:
