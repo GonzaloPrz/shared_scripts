@@ -144,7 +144,7 @@ for threshold in thresholds:
             print(task,dimension,y_label,model_type)
             path_to_results_ = Path(results_dir,task,dimension,kfold_folder,y_label,stat_folder)
             
-            path_to_results = Path(path_to_results_,scoring,'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '')
+            path_to_results = Path(path_to_results_,scoring,'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'])
             random_seeds = [folder.name for folder in path_to_results.iterdir() if 'random_seed' in folder.name]
 
             if len(random_seeds) == 0:
@@ -180,11 +180,11 @@ for threshold in thresholds:
                     
                 predictions = predictions.drop_duplicates('id')
 
-                Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '', random_seed).mkdir(exist_ok=True,parents=True)
+                Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '', config['version'],random_seed).mkdir(exist_ok=True,parents=True)
 
-                with open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'predictions_dev.npy'),'wb') as f:
+                with open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'predictions_dev.npy'),'wb') as f:
                     pickle.dump(predictions,f)
-                predictions.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'predictions_dev.csv'),index=False)
+                predictions.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'predictions_dev.csv'),index=False)
 
                 if problem_type == 'reg':
                     sns.set_theme(style="whitegrid")  # Fondo blanco con grid sutil
@@ -219,7 +219,7 @@ for threshold in thresholds:
                     save_path = Path(results_dir, f'plots', task, dimension, y_label,
                                     stat_folder,config["bootstrap_method"],'bayes',scoring,
                                     'hyp_opt' if hyp_opt else '',
-                                    'feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,
+                                    'feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,
                                     f'{model_type}_{method}.png')
                     save_path.parent.mkdir(parents=True, exist_ok=True)
                     
@@ -250,7 +250,7 @@ for threshold in thresholds:
                         continue
                     plt.close()
 
-                if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'model_{model_type}.npy').exists() and not overwrite:
+                if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'model_{model_type}.npy').exists() and not overwrite:
                     print('Model already exists')
                     continue
                 
@@ -308,11 +308,11 @@ for threshold in thresholds:
                 if 'random_state' in best_params.keys():
                     best_params['random_state'] = 42
 
-                model = utils.Model(model_class(**best_params),scaler,imputer)
+                model = utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None)
                 
-                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])[0] if feature_selection else X_train.columns
+                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])[0] if feature_selection else X_train.columns
                 
-                model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train)
+                model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates if regress_out else None, config['fill_na'],config['regress_out_method'])
 
                 shap_values = utils.run_shap_analysis(model,X_train[best_features],y_train,IDs_train,CV,fill_na=config['fill_na'])
 
@@ -327,35 +327,42 @@ for threshold in thresholds:
 
                 Path(results_dir).mkdir(parents=True, exist_ok=True)
                 
-                Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed).mkdir(parents=True,exist_ok=True)
-                Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed).mkdir(parents=True,exist_ok=True)
-                mean_shap_values = shap_values.mean()
-                mean_shap_values.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file))
-                # Summary Plot (Beeswarm) - El más importante para papers
-                plt.figure(figsize=(10, 8))
-                shap.summary_plot(shap_values.values.astype(float), X_train[best_features], feature_names=best_features, show=False)
-                plt.title(f'SHAP Summary', fontsize=16)
-                plt.tight_layout()
-                plt.savefig(Path(results_dir, feature_importance_fig_file), dpi=300)
-                plt.close()
-                '''
-                if hasattr(model.model,'coef_'):
-                    feature_importance = np.abs(model.model.coef_[0])
-                    coef = pd.DataFrame({'feature':best_features,'importance':feature_importance / np.sum(feature_importance)}).sort_values('importance',ascending=False)
-                    coef.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file),index=False)
-                elif hasattr(model.model,'feature_importance'):
-                    feature_importance = model.model.feature_importance
-                    feature_importance = pd.DataFrame({'feature':best_features,'importance':feature_importance}).sort_values('importance',ascending=False)
-                    feature_importance.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file),index=False)
-                elif hasattr(model.model,'get_booster'):
-                    feature_importance = pd.DataFrame({'feature':best_features,'importance':model.model.feature_importances_}).sort_values('importance',ascending=False)
-                    feature_importance.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,feature_importance_file),index=False)
-                else:
-                    print(task,dimension,f'No feature importance available for {model_type}')
-                '''
-                pickle.dump(model.model,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'model_{model_type}.npy'),'wb'))
-                pickle.dump(model.scaler,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'scaler_{model_type}.npy'),'wb'))
-                pickle.dump(model.imputer,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,f'imputer_{model_type}.npy'),'wb'))  
+                Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed).mkdir(parents=True,exist_ok=True)
+                Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed).mkdir(parents=True,exist_ok=True)
+                try:
+                    mean_shap_values = shap_values.mean()
+                    mean_shap_values.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,feature_importance_file))
+                    # Summary Plot (Beeswarm)
+                    plt.figure(figsize=(10, 8))
+                    shap.summary_plot(shap_values.values.astype(float), X_train[best_features], feature_names=best_features, show=False)
+                    plt.title(f'SHAP Summary', fontsize=16)
+                    plt.tight_layout()
+                    plt.savefig(Path(results_dir, feature_importance_fig_file), dpi=300)
+                    plt.close()
+                except:
+
+                    if hasattr(model.model,'coef_'):
+                        feature_importance = np.abs(model.model.coef_[0])
+                        coef = pd.DataFrame({'feature':best_features,'importance':feature_importance / np.sum(feature_importance)}).sort_values('importance',ascending=False)
+                        coef.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,feature_importance_file),index=False)
+                    elif hasattr(model.model,'feature_importance'):
+                        feature_importance = model.model.feature_importance
+                        feature_importance = pd.DataFrame({'feature':best_features,'importance':feature_importance}).sort_values('importance',ascending=False)
+                        feature_importance.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,feature_importance_file),index=False)
+                    elif hasattr(model.model,'get_booster'):
+                        feature_importance = pd.DataFrame({'feature':best_features,'importance':model.model.feature_importances_}).sort_values('importance',ascending=False)
+                        feature_importance.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,feature_importance_file),index=False)
+                    elif hasattr(model.model,'feature_importances_'):
+                        feature_importance = model.model.feature_importances_
+                        feature_importance = pd.DataFrame({'feature':best_features,'importance':feature_importance}).sort_values('importance',ascending=False)
+                        feature_importance.to_csv(Path(results_dir,f'feature_importance_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,feature_importance_file),index=False)
+                    
+                    else:
+                        print(task,dimension,f'No feature importance available for {model_type}')
+                    
+                pickle.dump(model.model,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'model_{model_type}.npy'),'wb'))
+                pickle.dump(model.scaler,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'scaler_{model_type}.npy'),'wb'))
+                pickle.dump(model.imputer,open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed,f'imputer_{model_type}.npy'),'wb'))  
                 
         if problem_type == 'reg':
             best_models = pd.concat((best_models,corr_results), axis=1) 

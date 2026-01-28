@@ -1,3 +1,4 @@
+
 import numpy as np
 from sklearn.metrics import *
 from sklearn.linear_model import LinearRegression
@@ -119,6 +120,11 @@ class Model():
             cal_outputs_test, calmodel = calibration_train_on_heldout(logpost_trn=logpost_trn,targets_trn=targets_trn,logpost_tst=logpost_tst,calmethod=self.calmethod,calparams=self.calparams,return_model=True)        
 
         return cal_outputs_test, calmodel
+
+def get_base_dir(project_name):
+    base_dir = Path(Path.home(),'data',project_name) if 'Users/gp' in str(Path.home()) else Path('D:','CNC_Audio','gonza','data',project_name) 
+
+    return base_dir
 
 def _build_path(base_dir, task, dimension, y_label, random_seed_test, file_name, config, bayes=False, scoring=None):
     """Constructs a standardized file path from configuration options."""

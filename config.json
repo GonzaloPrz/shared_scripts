@@ -5,12 +5,12 @@
     "stratify": true,
     "calibrate": false,
     "n_folds_outer": 5.0,
-    "n_folds_inner": 10.0,
+    "n_folds_inner": 0.2,
     "n_iter": 20.0,
     "feature_selection": true,
     "fill_na": -10,
     "init_points": 20.0,
-    "n_seeds_train": 1.0,
+    "n_seeds_train": 5.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
@@ -20,7 +20,7 @@
     "early_fusion": false,
     "overwrite": false,
     "parallel": true,
-    "n_seeds_test": 0,
+    "n_seeds_test": 5.0,
     "bootstrap_method": "bca",
     "round_values": false,
     "add_dem": false,
@@ -29,20 +29,16 @@
         ""
     ],
     "regress_out_method": "non_linear",
-    "test_size": 0.0,
-    "data_file": "mean_pitch_features_phrases_CN_FTD.csv",
+    "test_size": 0.2,
+    "data_file": "mean_windows_CN_FTD.csv",
     "tasks": [
         "Fugu"
     ],
     "single_dimensions": [
-        "ALL_pysent__sentiment_pysent",
-        "NEG_pysent__sentiment_pysent",
-        "NEU_pysent__sentiment",
-        "POS_pysent__sentiment_pysent",
-        "ALL_gemini__sentiment_gemini",
-        "NEG_gemini__sentiment_gemini",
-        "NEU_gemini__sentiment_gemini",
-        "POS_gemini__sentiment_gemini"
+        "ALL__sentiment",
+        "POS__sentiment",
+        "NEG__sentiment",
+        "NEU__sentiment"
     ],
     "y_labels": [
         "group"
@@ -50,15 +46,23 @@
     "avoid_stats": [],
     "stat_folder": "",
     "random_seeds_train": [
-        3
+        3,
+        9,
+        27,
+        81,
+        243
     ],
     "random_seeds_test": [
-        ""
+        3,
+        9,
+        27,
+        81,
+        243
     ],
     "bayes": true,
     "covariates": [],
     "problem_type": "clf",
-    "kfold_folder": "5_folds_10_folds",
-    "version": "v_1",
+    "kfold_folder": "5_folds_20pct",
+    "version": "v_2",
     "scoring_metric": "roc_auc"
 }

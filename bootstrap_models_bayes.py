@@ -115,7 +115,7 @@ for task in tasks:
                     for model_type in models:
                         print(model_type)
                         if not overwrite and all_results.shape[0] > 0:
-                            row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label)]
+                            row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == str(random_seed))]
                             if len(row) > 0:
                                 continue
                         
@@ -266,26 +266,26 @@ for scoring in np.unique(scorings):
 
                     best_best_models.loc[best_best_models.shape[0],:] = best_best_models_append
 
-        try:
-            best_best_models[scoring_col] = best_best_models[scoring].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
-        except:
-            best_best_models[scoring_col] = best_best_models[f'{scoring}_score'].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
+    try:
+        best_best_models[scoring_col] = best_best_models[scoring].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
+    except:
+        best_best_models[scoring_col] = best_best_models[f'{scoring}_score'].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
 
-        best_best_models = best_best_models.sort_values(by=['y_label',scoring_col],ascending=ascending).reset_index(drop=True)
+    best_best_models = best_best_models.sort_values(by=['y_label',scoring_col],ascending=ascending).reset_index(drop=True)
 
-        best_best_best_models = pd.DataFrame(columns=best_best_models.columns)
-        if isinstance(y_labels,dict):
-            y_labels_ = sum(y_labels.values(),[])
-        else:
-            y_labels_ = y_labels
+    best_best_best_models = pd.DataFrame(columns=best_best_models.columns)
+    if isinstance(y_labels,dict):
+        y_labels_ = sum(y_labels.values(),[])
+    else:
+        y_labels_ = y_labels
 
-        for y_label,task in itertools.product(y_labels_,tasks):
-            dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
-            for dimension in dimensions:
-                try:
-                    idx = best_best_models[(best_best_models['y_label'] == y_label) & (best_best_models['task'] == task) & (best_best_models['dimension'] == dimension)].index[0]
-                    best_best_best_models.loc[best_best_best_models.shape[0],:] = best_best_models.loc[idx,:]
-                except:
-                    continue
+    for y_label,task,random_seed_test in itertools.product(y_labels_,tasks,random_seeds_test):
+        dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
+        for dimension in dimensions:
+            try:
+                idx = best_best_models[(best_best_models['y_label'] == y_label) & (best_best_models['task'] == task) & (best_best_models['dimension'] == dimension) & (best_best_models['random_seed_test'].astype(str) == str(random_seed_test))].index[0]
+                best_best_best_models.loc[best_best_best_models.shape[0],:] = best_best_models.loc[idx,:]
+            except:
+                continue
 
-        best_best_best_models.to_csv(Path(results_dir,f'best_{output_filename}'),index=False)
+    best_best_best_models.to_csv(Path(results_dir,f'best_{output_filename}'),index=False)
