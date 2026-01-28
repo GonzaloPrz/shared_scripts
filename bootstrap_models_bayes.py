@@ -184,7 +184,7 @@ for task in tasks:
                             "dimension": dimension,
                             "y_label": y_label,
                             "model_type": model_type,
-                            "random_seed_test": random_seed if random_seed != '' else np.nan,
+                            "random_seed_test": random_seed if random_seed != '' else 'nan',
                             "bootstrap_method_dev": bootstrap_method
                         }
                         

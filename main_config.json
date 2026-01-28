@@ -1,6 +1,6 @@
 {
     "y_labels": {
-                "crossling_mci":["NPI_Anxiety_Severity","NPI_Depression_Severity","NPI_Apathy_Severity","NPI_Agitation_Severity"],
+                "crossling_mci":["MMSE_Score"],
                 "affective_pitch_CN_AD": ["group"],
                 "affective_pitch_CN_FTD": ["group"],
                 "affective_pitch_AD_FTD": ["group"],
@@ -114,8 +114,14 @@
     
     "single_dimensions": {
                     "crossling_mci":["all"],
-                    "affective_pitch_CN_AD": ["ALL__sentiment","POS__sentiment","NEG__sentiment","NEU__sentiment"],
-                    "affective_pitch_CN_FTD": ["ALL__sentiment","POS__sentiment","NEG__sentiment","NEU__sentiment"],
+                    "affective_pitch_CN_AD": ["ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__ALL_timing__sentiment","ALL_energy__ALL_pitch__ALL_timing__sentiment",
+                                              "POS_energy__sentiment","POS_pitch__sentiment","POST_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__POS_timing__sentiment","POS_energy__POS_pitch__POS_timing__sentiment",
+                                              "NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__NEG_timing__sentiment","NEG_energy__NEG_pitch__NEG_timing__sentiment",
+                                              "NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__NEU_timing__sentiment","NEU_energy__NEU_pitch__NEU_timing__sentiment"],
+                    "affective_pitch_CN_FTD": ["ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__ALL_timing__sentiment","ALL_energy__ALL_pitch__ALL_timing__sentiment",
+                                              "POS_energy__sentiment","POS_pitch__sentiment","POST_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__POS_timing__sentiment","POS_energy__POS_pitch__POS_timing__sentiment",
+                                              "NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__NEG_timing__sentiment","NEG_energy__NEG_pitch__NEG_timing__sentiment",
+                                              "NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__NEU_timing__sentiment","NEU_energy__NEU_pitch__NEU_timing__sentiment"],
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
                                 "pais":["phq9__sentiment__verbosity"],
@@ -214,8 +220,8 @@
 
     "data_file": {
                 "crossling_mci":"data_french.csv",
-                "affective_pitch_CN_AD": "mean_windows_CN_AD.csv",
-                "affective_pitch_CN_FTD": "mean_windows_CN_FTD.csv",
+                "affective_pitch_CN_AD": "mean_phrases_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_phrases_CN_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",
                 "tell_classifier": "data_MOTOR-LIBRE.csv",

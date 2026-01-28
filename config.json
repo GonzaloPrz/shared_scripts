@@ -30,15 +30,39 @@
     ],
     "regress_out_method": "non_linear",
     "test_size": 0.2,
-    "data_file": "mean_windows_CN_FTD.csv",
+    "data_file": "mean_phrases_CN_FTD.csv",
     "tasks": [
         "Fugu"
     ],
     "single_dimensions": [
-        "ALL__sentiment",
-        "POS__sentiment",
-        "NEG__sentiment",
-        "NEU__sentiment"
+        "ALL_energy__sentiment",
+        "ALL_pitch__sentiment",
+        "ALL_timing__sentiment",
+        "ALL_energy__ALL_pitch__sentiment",
+        "ALL_energy__ALL_timing__sentiment",
+        "ALL_pitch__ALL_timing__sentiment",
+        "ALL_energy__ALL_pitch__ALL_timing__sentiment",
+        "POS_energy__sentiment",
+        "POS_pitch__sentiment",
+        "POST_timing__sentiment",
+        "POS_energy__POS_pitch__sentiment",
+        "POS_energy__POS_timing__sentiment",
+        "POS_pitch__POS_timing__sentiment",
+        "POS_energy__POS_pitch__POS_timing__sentiment",
+        "NEG_energy__sentiment",
+        "NEG_pitch__sentiment",
+        "NEG_timing__sentiment",
+        "NEG_energy__NEG_pitch__sentiment",
+        "NEG_energy__NEG_timing__sentiment",
+        "NEG_pitch__NEG_timing__sentiment",
+        "NEG_energy__NEG_pitch__NEG_timing__sentiment",
+        "NEU_energy__sentiment",
+        "NEU_pitch__sentiment",
+        "NEU_timing__sentiment",
+        "NEU_energy__NEU_pitch__sentiment",
+        "NEU_energy__NEU_timing__sentiment",
+        "NEU_pitch__NEU_timing__sentiment",
+        "NEU_energy__NEU_pitch__NEU_timing__sentiment"
     ],
     "y_labels": [
         "group"
@@ -59,6 +83,6 @@
     "covariates": [],
     "problem_type": "clf",
     "kfold_folder": "5_folds_20pct",
-    "version": "v_2",
+    "version": "v_1",
     "scoring_metric": "roc_auc"
 }
