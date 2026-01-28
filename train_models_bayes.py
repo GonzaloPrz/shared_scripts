@@ -364,63 +364,63 @@ for task in tasks:
                 with open(Path(__file__).parent/'config.json', 'w') as f:
                     json.dump(config, f, indent=4)
 
-                subfolders = [
+                for random_seed_test in random_seeds_test:
+                    
+                    subfolders = [
                     task, dimension,
                     config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(covariates) > 0 else y_label, config['stat_folder'],scoring_metric,
                     'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
                     'filter_outliers' if config['filter_outliers'] and config['problem_type'] == 'reg' else '','rounded' if round_values else '','cut' if cut_values > 0 else '',
-                    'shuffle' if config['shuffle_labels'] else ''
-                ]
+                    'shuffle' if config['shuffle_labels'] else '', f'random_seed_{int(random_seed_test)}' if config['test_size'] else ''
+                    ]
+                    
+                    path_to_save = results_dir.joinpath(*[str(s) for s in subfolders if s])
+                    path_to_save.mkdir(parents=True, exist_ok=True)
 
-                path_to_save = results_dir.joinpath(*[str(s) for s in subfolders if s])
-                path_to_save.mkdir(parents=True, exist_ok=True)
-                
-                versions_dir = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
+                    versions_dir = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
 
-                if len(versions_dir) == 0:
-                    version = 1
-                else:
-                    existing_versions = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
-
-                    for existing_version in existing_versions:
-                        try:
-                            data_file_ = json.load(open(Path(path_to_save,existing_version,'config.json')))['data_file']
-                        except:
-                            data_file_ = data_file
-                            config['data_file'] = data_file_
-                            
-                        if data_file_ == data_file:
-                            version = int(existing_version.split('_')[1])
-                            break       
+                    if len(versions_dir) == 0:
+                        version = 1
                     else:
-                        version = max([int(v.split('_')[1]) for v in existing_versions]) + 1
+                        existing_versions = [folder.name for folder in path_to_save.iterdir() if folder.is_dir() and folder.name.startswith('v_')]
 
-                config['version'] = f'v_{version}'
-                path_to_save = path_to_save / config['version']
-                path_to_save.mkdir(parents=True, exist_ok=True)
+                        for existing_version in existing_versions:
+                            try:
+                                data_file_ = json.load(open(Path(path_to_save,existing_version,'config.json')))['data_file']
+                            except:
+                                data_file_ = data_file
+                                config['data_file'] = data_file_
+                                
+                            if data_file_ == data_file:
+                                version = int(existing_version.split('_')[1])
+                                break       
+                        else:
+                            version = max([int(v.split('_')[1]) for v in existing_versions]) + 1
 
-                if Path(path_to_save,'config.json').exists():
-                    with open(Path(path_to_save,'config.json'), 'rb') as f:
-                        old_config = json.load(f)
-                        old_config['n_boot'] = config['n_boot']
+                    config['version'] = f'v_{version}'
+                    path_to_save = Path(path_to_save,config['version'])
+                    path_to_save.mkdir(exist_ok=True,parents=True)
 
-                    if (not config['overwrite']) & (any(old_config[x] != config[x] for x in ['n_iter','init_points','n_seeds_train','n_boot'])):
-                        for key in ['n_iter','init_points','n_seeds_train','n_boot']:
-                            print(f'Warning: {key} has changed from {old_config[key]} to {config[key]}. Overwriting previous results.')
-                            config[key] = old_config[key]
-                    with open(Path(path_to_save,'config.json'),'w') as f:
+                    if Path(path_to_save,'config.json').exists():
+                        with open(Path(path_to_save,'config.json'), 'rb') as f:
+                            old_config = json.load(f)
+                            old_config['n_boot'] = config['n_boot']
+
+                        if (not config['overwrite']) & (any(old_config[x] != config[x] for x in ['n_iter','init_points','n_seeds_train','n_boot'])):
+                            for key in ['n_iter','init_points','n_seeds_train','n_boot']:
+                                print(f'Warning: {key} has changed from {old_config[key]} to {config[key]}. Overwriting previous results.')
+                                config[key] = old_config[key]
+                        with open(Path(path_to_save,'config.json'),'w') as f:
+                            json.dump(config, f, indent=4)
+                            
+                    if 'scoring_metric' not in list(config.keys()):
+                        config['scoring_metric'] = scoring_metric
+                        config['add_dem'] = add_dem
+                        config['round_values'] = round_values
+
+                    with open(Path(Path(__file__).parent,'config.json'),'w') as f:
                         json.dump(config, f, indent=4)
-                        
-                if 'scoring_metric' not in list(config.keys()):
-                    config['scoring_metric'] = scoring_metric
-                    config['add_dem'] = add_dem
-                    config['round_values'] = round_values
 
-                with open(Path(Path(__file__).parent,'config.json'),'w') as f:
-                    json.dump(config, f, indent=4)
-
-                for random_seed_test in random_seeds_test:
-                    Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '').mkdir(exist_ok=True,parents=True)
                     if test_size > 0:
                         X_train_, X_test_, y_train_, y_test_, ID_train_, ID_test_ = train_test_split(
                             data, y, ID,
@@ -462,8 +462,8 @@ for task in tasks:
 
                     data_test = pd.concat((X_test_,y_test_,ID_test_),axis=1)
                     
-                    data_train.to_csv(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', 'data_train.csv'),index=False)
-                    data_test.to_csv(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', 'data_test.csv'),index=False)
+                    data_train.to_csv(Path(path_to_save,'data_train.csv'),index=False)
+                    data_test.to_csv(Path(path_to_save,'data_test.csv'),index=False)
 
                     hyperp['knnc']['n_neighbors'] = (1,n_max)
                     hyperp['knnr']['n_neighbors'] = (1,n_max)
@@ -471,7 +471,7 @@ for task in tasks:
                     # Check for data leakage.
                     assert set(ID_train_).isdisjoint(set(ID_test_)), 'Data leakage detected between train and test sets!'
 
-                    if (Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', f'all_models_{model_key}.csv').exists() and config['calibrate'] == False) or (Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', f'cal_outputs_{model_key}.pkl').exists() and config['calibrate']):
+                    if (Path(path_to_save,f'all_models_{model_key}.csv').exists() and config['calibrate'] == False) or (Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', f'cal_outputs_{model_key}.pkl').exists() and config['calibrate']):
                         if not bool(config['overwrite']):
                             print(f'Results already exist for {task} - {y_label} - {model_key}. Skipping...')
                             continue
@@ -505,11 +505,10 @@ for task in tasks:
                                                                                         regress_out_method = config['regress_out_method']
                                                                                         )
                 
-                    Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '').mkdir(parents=True, exist_ok=True)
-                    with open(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '','config.json'),'w') as f:
+                    with open(Path(path_to_save,'config.json'),'w') as f:
                         json.dump(config,f)
                 
-                    all_models.to_csv(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '',f'all_models_{model_key}.csv'),index=False)
+                    all_models.to_csv(Path(path_to_save,f'all_models_{model_key}.csv'),index=False)
                     result_files = {
                         'X_train.npy': X_train_,
                         'y_train.npy': y_train_,
@@ -525,8 +524,8 @@ for task in tasks:
                             'IDs_test.npy': ID_test_,
                         })
                     for fname, obj in result_files.items():
-                        with open(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', fname), 'wb') as f:
+                        with open(Path(path_to_save, fname), 'wb') as f:
                             np.save(f, obj)
                     
-                    with open(Path(path_to_save,f'random_seed_{int(random_seed_test)}' if config['test_size'] else '', 'config.json'), 'w') as f:
+                    with open(Path(path_to_save, 'config.json'), 'w') as f:
                         json.dump(config, f, indent=4)

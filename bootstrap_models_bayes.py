@@ -53,7 +53,7 @@ scorings = [config["scoring_metric"]]
 
 tasks = [folder.name for folder in Path(results_dir).iterdir() if folder.is_dir() and folder.name not in ['plots','rocs','feature_importance_bayes','feature_importance','final_models_bayes','final_models']]
 
-output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
+output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{version}.csv'.replace('__','_')
                 
 if not hyp_opt:
         output_filename = output_filename.replace('_hyp_opt','')
@@ -98,7 +98,7 @@ for task in tasks:
 
             for scoring in np.unique(scorings):
                 #print(scoring)
-                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "",version)
+                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "")
 
                 if not path.exists():
                     continue
@@ -110,7 +110,7 @@ for task in tasks:
 
                 for random_seed in random_seeds:
                     
-                    models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
+                    models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed,version).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
                     
                     for model_type in models:
                         print(model_type)

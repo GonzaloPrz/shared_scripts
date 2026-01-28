@@ -20,7 +20,7 @@
     "early_fusion": false,
     "overwrite": false,
     "parallel": true,
-    "n_seeds_test": 5.0,
+    "n_seeds_test": 1.0,
     "bootstrap_method": "bca",
     "round_values": false,
     "add_dem": false,
@@ -53,11 +53,7 @@
         243
     ],
     "random_seeds_test": [
-        3,
-        9,
-        27,
-        81,
-        243
+        3
     ],
     "bayes": true,
     "covariates": [],
