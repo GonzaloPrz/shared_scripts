@@ -57,6 +57,7 @@ problem_type = config["problem_type"]
 calibrate = bool(config["calibrate"])
 scoring_metrics = [config['scoring_metric']]
 problem_type = config['problem_type']
+version = config['version']
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -91,6 +92,9 @@ for scoring in scoring_metrics:
     
     for index in index_list:
         for y_label in y_labels:
+
+            if best_models.loc[index[0],'task'] == best_models.loc[index[1],'task']:
+                continue
 
             # Find best models for each task/dimension
             tasks = [best_models.loc[index[0],'task'], best_models.loc[index[1],'task']]

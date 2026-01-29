@@ -19,7 +19,7 @@ from psrcal.calibration import *
 
 from joblib import Parallel, delayed
 
-import math, shap
+import math, shap, pickle
 
 from bayes_opt import BayesianOptimization
 
@@ -135,8 +135,15 @@ def _build_path(base_dir, task, dimension, y_label, random_seed_test, file_name,
     cut_str = "cut" if config["cut_values"] > 0 else ""
     shuffle_str = "shuffle" if config["shuffle_labels"] else ""
 
-    return Path(base_dir,task, dimension, config['kfold_folder'], 
+    path = Path(base_dir,task, dimension, config['kfold_folder'], 
            y_label, config["stat_folder"], scoring if bayes else '', hyp_opt_str, feature_sel_str, outlier_str, round_str, cut_str,shuffle_str, random_seed_test, config["version"], file_name)
+
+    if not path.exists():
+        path = Path(str(path).replace(config['version'],''))
+    if not path.exists():
+        path = Path(str(path).replace('.npy','.pkl'))
+        
+    return path
 
 def _load_data(results_dir, task, dimension, y_label, model_type, random_seed_test, config, bayes=False,scoring=None):
     """Loads model outputs and true labels for a given configuration."""
@@ -154,14 +161,24 @@ def _load_data(results_dir, task, dimension, y_label, model_type, random_seed_te
 
     with open(IDs_path, "rb") as f:
         # Load and select the specific model's outputs
-        IDs_dev = np.load(f,allow_pickle=True)
+        try:
+            IDs_dev = np.load(f,allow_pickle=True)
+        except:
+            IDs_dev = pickle.load(f)
 
     with open(outputs_path, "rb") as f:
         # Load and select the specific model's outputs
-        outputs_dev = np.load(f,allow_pickle=True)
-    
+        try:
+            outputs_dev = np.load(f,allow_pickle=True)
+        except:
+            outputs_dev = pickle.load(f)
+
     with open(y_dev_path, "rb") as f:
-        y_dev = np.load(f,allow_pickle=True)
+
+        try:
+            y_dev = np.load(f,allow_pickle=True)
+        except:
+            y_dev = pickle.load(f)
 
     IDs_path = _build_path(**path_kwargs, file_name=f'IDs_test.npy',config=config,bayes=bayes,scoring=scoring)    
     outputs_path = _build_path(**path_kwargs,file_name=f'outputs_test_{model_type}_calibrated.npy' if config["calibrate"] else f'outputs_test_{model_type}.npy',config=config,bayes=bayes,scoring=scoring)
@@ -170,14 +187,23 @@ def _load_data(results_dir, task, dimension, y_label, model_type, random_seed_te
     try:
         with open(IDs_path, "rb") as f:
             # Load and select the specific model's outputs
-            IDs_test = np.load(f,allow_pickle=True)
+            try:
+                IDs_test = np.load(f,allow_pickle=True)
+            except:
+                IDs_test = pickle.load(f)
 
         with open(outputs_path, "rb") as f:
             # Load and select the specific model's outputs
-            outputs_test = np.load(f,allow_pickle=True)
-        
+            try:
+                outputs_test = np.load(f,allow_pickle=True)
+            except:
+                outputs_test = pickle.load(f)
+
         with open(y_test_path, "rb") as f:
-            y_test = np.load(f,allow_pickle=True)
+            try:
+                y_test = np.load(f,allow_pickle=True)
+            except:
+                y_test = pickle.load(f)
     except:
         IDs_test, outputs_test, y_test = None, None, None
 

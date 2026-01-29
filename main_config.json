@@ -1,6 +1,6 @@
 {
     "y_labels": {
-                "crossling_mci":["NPI_Anxiety_Severity","NPI_Depression_Severity","NPI_Apathy_Severity","NPI_Agitation_Severity"],
+                "crossling_mci":["MMSE"],
                 "affective_pitch_CN_AD": ["group"],
                 "affective_pitch_CN_FTD": ["group"],
                 "affective_pitch_AD_FTD": ["group"],
@@ -39,7 +39,7 @@
     },
 
     "tasks": {
-                "crossling_mci":["positive","negative"],
+                "crossling_mci":["positive","negative","negative__positive"],
                 "affective_pitch_CN_AD": ["Fugu"],
                 "affective_pitch_CN_FTD": ["Fugu"],
                 "affective_pitch_AD_FTD": ["Fugu"],
@@ -113,7 +113,8 @@
     },
     
     "single_dimensions": {
-                    "crossling_mci":["all"],
+                    "crossling_mci":["loudness","pitch","sentiment","spectral","speech_timing","voice_quality","word","verb","sentence",
+                "sentiment__word__verb__sentence", "loudness__pitch__spectral__speech_timing__voice_quality"],
                     "affective_pitch_CN_AD": ["ALL__sentiment","POS__sentiment","NEG__sentiment","NEU__sentiment"],
                     "affective_pitch_CN_FTD": ["ALL__sentiment","POS__sentiment","NEG__sentiment","NEU__sentiment"],
                     "53_ceac":{"phq":["gemini"],
@@ -132,7 +133,7 @@
                                 "phq__pais__sobremesa":["gemini__phq9__sentiment__verbosity"],
                                 "phq__cachorro__pais__sobremesa":["gemini__phq9__sentiment__verbosity"]
                             },
-
+        
                     "tell_classifier": ["pitch",
                         "voice_quality",
                         "talking-intervals"],
@@ -178,10 +179,7 @@
                                             ["bio"]
                                     },
                                     "Proyecto_Ivo": {
-                                                "Animales__P": ["properties"],
-                                                "nps": ["executive"],
-                                                "brain": ["norm_brain_lit","norm_AAL"],
-                                                "connectivity": ["networks","selected_areas"]
+                                                "nps": ["executive","memory_im","memory_dif","memory_mmse"]
                                     },
 
                     "arequipa": ["verbosity__word_properties__talking_intervals",
@@ -213,9 +211,9 @@
     },
 
     "data_file": {
-                "crossling_mci":"data_french.csv",
-                "affective_pitch_CN_AD": "mean_windows_CN_AD.csv",
-                "affective_pitch_CN_FTD": "mean_windows_CN_FTD.csv",
+                "crossling_mci":"data_spanish.csv",
+                "affective_pitch_CN_AD": "mean_phrases_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_phrases_CN_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",
                 "tell_classifier": "data_MOTOR-LIBRE.csv",
@@ -231,7 +229,7 @@
     },
 
     "data_file_test": {
-                    "crossling_mci":"data_spanish.csv",
+                    "crossling_mci":"data_french.csv",
                     "arequipa" : "data_unmatched_group.csv",
                     "arequipa_reg":"data_unmatched_group.csv"
     },
