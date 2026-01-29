@@ -122,6 +122,8 @@ for task in tasks:
                         if not utils._build_path(results_dir,task,dimension,y_label,random_seed,f"outputs_{model_type}.npy",config,bayes=True,scoring=scoring).exists():
                             continue
                         
+                        data_file = json.load(open(utils._build_path(results_dir,task,dimension,y_label,random_seed,"config.json",config,bayes=True,scoring=scoring),'rb'))['data_file']
+
                         _,outputs, y_dev,_,_,_ = utils._load_data(results_dir,task,dimension,y_label,model_type,random_seed,config,bayes=True,scoring=scoring)
 
                         problem_type = config['problem_type']

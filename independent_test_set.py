@@ -20,6 +20,8 @@ y_labels = config["y_labels"]
 tasks = config["tasks"]
 bayes = config['bayes']
 hyp_opt = config["n_iter"] > 0
+version = config["version"]
+
 try:
     feature_selection = config["n_iter_features"] > 0
 except:
@@ -60,7 +62,7 @@ for y_label, task in itertools.product(y_labels, tasks):
         ID = data.pop(id_col)
         y = data.pop(y_label)
 
-        path_to_save = Path(results_dir, task, dimension,kfold_folder,y_label,stat_folder,config['scoring_metric'] if bayes else '','hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '')
+        path_to_save = Path(results_dir, task, dimension,kfold_folder,y_label,stat_folder,config['scoring_metric'] if bayes else '','hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '',version)
         
         path_to_save.mkdir(parents=True, exist_ok=True)
 
