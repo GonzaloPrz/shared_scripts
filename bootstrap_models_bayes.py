@@ -106,11 +106,14 @@ for task in tasks:
                     random_seeds = ['']
 
                 for random_seed in random_seeds:
-                    
+                    if random_seed == '':
+                        random_seed = 'nan'
+
                     models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed,version).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
                     
                     for model_type in models:
                         print(model_type)
+
                         if not overwrite and all_results.shape[0] > 0:
                             row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == str(random_seed))]
                             if len(row) > 0:
@@ -225,6 +228,7 @@ for scoring in np.unique(scorings):
 
     all_results['random_seed_test'] = all_results['random_seed_test'].astype(str).apply(lambda x: str(x).lower())
 
+    y_labels_ = all_results['y_label'].unique()
     best_best_models = pd.DataFrame(columns=all_results.columns)
 
     random_seeds_test = all_results['random_seed_test'].unique()
@@ -241,10 +245,7 @@ for scoring in np.unique(scorings):
             dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
             for dimension in dimensions:
                 
-                if isinstance(y_labels,dict):
-                    y_labels_ = y_labels[task]
-                else:
-                    y_labels_ = y_labels
+                y_labels_ = all_results['y_label'].unique()
                 
                 for y_label in y_labels_:
                     best_best_models_ = all_results[(all_results['task'] == task) & (all_results['y_label'] == y_label) & (all_results['dimension'] == dimension) & (all_results['random_seed_test'].astype(str) == str(random_seed_test))]
@@ -273,12 +274,10 @@ for scoring in np.unique(scorings):
 
     best_best_models = best_best_models.sort_values(by=['y_label',scoring_col],ascending=ascending).reset_index(drop=True)
 
+    y_labels_ = all_results['y_label'].unique()
+    random_seeds_test = all_results['random_seed_test'].unique()
     best_best_best_models = pd.DataFrame(columns=best_best_models.columns)
-    if isinstance(y_labels,dict):
-        y_labels_ = sum(y_labels.values(),[])
-    else:
-        y_labels_ = y_labels
-
+    
     for y_label,task,random_seed_test in itertools.product(y_labels_,tasks,random_seeds_test):
         dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
         for dimension in dimensions:

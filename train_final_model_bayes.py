@@ -49,7 +49,6 @@ overwrite = bool(config["overwrite"])
 filter_outliers = bool(config['filter_outliers']) if problem_type == 'reg' else False
 round_values = bool(config['round_values'])
 cut_values = bool(config['cut_values'] > 0)
-regress_out = len(config['covariates']) > 0 if problem_type == 'reg' else False
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -177,8 +176,17 @@ for threshold in thresholds:
                     for c in range(outputs_dev.shape[-1]):
                         predictions[f'outputs_class_{c}'] = outputs_dev[:,:,c].flatten()
                     predictions = pd.DataFrame(predictions)
-                    
+
                 predictions = predictions.drop_duplicates('id')
+
+                regress_out = list(set(json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out']) - set(['']))
+                regress_out_method = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out_method']
+                fill_na = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['fill_na']
+                
+                covariates_regress_out = pd.read_csv(Path(data_dir,data_file))[[id_col]+regress_out] if len(regress_out) > 0 else None
+
+                covariates_regress_out = covariates_regress_out[covariates_regress_out[id_col].isin(np.unique(IDs))].reset_index(drop=True) if covariates_regress_out is not None else None
+                covariates_regress_out.drop(id_col,axis=1,inplace=True) if covariates_regress_out is not None else None
 
                 Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '', random_seed,config['version']).mkdir(exist_ok=True,parents=True)
 
@@ -295,7 +303,7 @@ for threshold in thresholds:
                 
                 if int(config["n_iter"]):
                     try:
-                        best_params, best_score = utils.tuning(model_class,scaler,imputer,X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,hyperp[model_type],CV,init_points=int(config['init_points']),n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,calmethod=None,calparams=None,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])
+                        best_params, best_score = utils.tuning(model_class,scaler,imputer if config['fill_na'] != 0 else None,X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,hyperp[model_type],CV,init_points=int(config['init_points']),n_iter=n_iter,scoring=scoring,problem_type=problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,calmethod=None,calparams=None,round_values=config['round_values'],covariates=covariates_regress_out,fill_na=fill_na,regress_out_method=regress_out_method)    
                     except Exception as e:
                         print(e)
                         continue
@@ -310,12 +318,11 @@ for threshold in thresholds:
 
                 model = utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None)
                 
-                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates if regress_out else None,fill_na=config['fill_na'],regress_out_method=config['regress_out_method'])[0] if feature_selection else X_train.columns
+                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates_regress_out if regress_out else None,fill_na=fill_na,regress_out_method=regress_out_method)[0] if feature_selection else X_train.columns
                 
-                model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates if regress_out else None, config['fill_na'],config['regress_out_method'])
+                model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates_regress_out if regress_out else None, fill_na, regress_out_method)
 
-                shap_values = utils.run_shap_analysis(model,X_train[best_features],y_train,IDs_train,CV,fill_na=config['fill_na'])
-
+                shap_values = utils.run_shap_analysis(model,X_train[best_features],y_train,IDs_train,CV,fill_na=fill_na)
                 feature_importance_file = f'shap_feature_importance_{model_type}_{task}_{dimension}_{y_label}_{model_type}_shuffled_calibrated.csv'.replace('__','_')
 
                 if not shuffle_labels:
