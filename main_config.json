@@ -264,7 +264,7 @@
     },
 
     "covars":{
-            "crossling_mci": ["age","sex","education"],
+            "crossling_mci": [],
             "53_ceac": [],
             "arequipa_reg":["age","education","group","sex"],
             "continuo_ivo": ["age"],
