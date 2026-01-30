@@ -165,7 +165,7 @@ models_dict = {'clf':{
                     'lr':LR,
                     'knnc':KNNC,
                     'xgb':xgboost,
-                    #'rf':RandomForestClassifier
+                    'rf':RandomForestClassifier
                     #'qda':QDA,
                     #'lda': LDA
                     },

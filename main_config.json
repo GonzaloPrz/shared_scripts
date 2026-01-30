@@ -116,14 +116,25 @@
                     "crossling_mci":["loudness","pitch","sentiment","spectral","speech_timing","voice_quality","word","verb","sentence",
                 "sentiment__word__verb__sentence", "loudness__pitch__spectral__speech_timing__voice_quality"],
                     "affective_pitch_CN_AD": ["ALL_energy__ALL_pitch__ALL_timing__sentiment","ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__sentiment","ALL_pitch__ALL_timing__sentiment",
+                                              "ALL_energy__ALL_pitch__speech_timing__sentiment","ALL_energy__speech_timing__sentiment","ALL_pitch__speech_timing__sentiment","speech_timing__sentiment",
                                               "NEG_energy__NEG_pitch__NEG_timing__sentiment","NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__sentiment","NEG_pitch__NEG_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__speech_timing__sentiment","NEG_energy__speech_timing__sentiment","NEG_pitch__speech_timing__sentiment","speech_timing__sentiment",
                                               "NEU_energy__NEU_pitch__NEU_timing__sentiment","NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__sentiment","NEU_pitch__NEU_timing__sentiment",
-                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment"],
+                                              "NEU_energy__NEU_pitch__speech_timing__sentiment","NEU_energy__speech_timing__sentiment","NEU_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment",
+                                              "POS_energy__POS_pitch__speech_timing__sentiment","POS_energy__speech_timing__sentiment","POS_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "energy_baseline","pitch_baseline","speech_timing","energy_baseline__pitch_baseline","energy_baseline__speech_timing","pitch_baseline__speech_timing","energy_baseline__pitch_baseline__speech_timing"
+                                            ],
                     "affective_pitch_CN_FTD": ["ALL_energy__ALL_pitch__ALL_timing__sentiment","ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__sentiment","ALL_pitch__ALL_timing__sentiment",
+                                              "ALL_energy__ALL_pitch__speech_timing__sentiment","ALL_energy__speech_timing__sentiment","ALL_pitch__speech_timing__sentiment","speech_timing__sentiment",
                                               "NEG_energy__NEG_pitch__NEG_timing__sentiment","NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__sentiment","NEG_pitch__NEG_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__speech_timing__sentiment","NEG_energy__speech_timing__sentiment","NEG_pitch__speech_timing__sentiment","speech_timing__sentiment",
                                               "NEU_energy__NEU_pitch__NEU_timing__sentiment","NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__sentiment","NEU_pitch__NEU_timing__sentiment",
-                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment"],
-                    
+                                              "NEU_energy__NEU_pitch__speech_timing__sentiment","NEU_energy__speech_timing__sentiment","NEU_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment",
+                                              "POS_energy__POS_pitch__speech_timing__sentiment","POS_energy__speech_timing__sentiment","POS_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "energy_baseline","pitch_baseline","speech_timing","energy_baseline__pitch_baseline","energy_baseline__speech_timing","pitch_baseline__speech_timing","energy_baseline__pitch_baseline__speech_timing"],
+
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
                                 "pais":["phq9__sentiment__verbosity"],
@@ -219,7 +230,7 @@
 
     "data_file": {
                 "crossling_mci":"data_spanish.csv",
-                "affective_pitch_CN_AD": "mean_windows_CN_AD.csv",
+                "affective_pitch_CN_AD": "mean_phrases_CN_AD.csv",
                 "affective_pitch_CN_FTD": "mean_windows_CN_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",

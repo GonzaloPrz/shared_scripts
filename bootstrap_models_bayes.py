@@ -83,11 +83,8 @@ for task in tasks:
     dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
     for dimension in dimensions:
         print(dimension)
-        if isinstance(y_labels,dict):
-            y_labels_ = y_labels[task]
-        else:
-            y_labels_ = y_labels
-        
+        y_labels_ = [folder.name for folder in Path(results_dir,task,dimension,kfold_folder).iterdir() if folder.is_dir()]
+         
         for y_label in y_labels_:      
             #print(y_label)      
             path_ = Path(results_dir,task,dimension,kfold_folder,y_label,stat_folder)
