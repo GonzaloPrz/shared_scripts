@@ -31,13 +31,13 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='Proyecto_Ivo',type=str,help='Project name')
+    parser.add_argument('--project_name', default='crossling_mci',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
     parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
-    parser.add_argument('--n_folds_inner', type=float, default=0.2, help='Number of folds for cross validation (inner loop)')
+    parser.add_argument('--n_folds_inner', type=float, default=5, help='Number of folds for cross validation (inner loop)')
     parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
     parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
@@ -57,8 +57,8 @@ def parse_args():
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
-    parser.add_argument('--regress_out_method',type=str,default='non_linear',help='Whether to perform linear or non-linear regress-out')
+    parser.add_argument('--regress_out',type=str,default='age_sex_education',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
 def load_configuration(args):
@@ -127,6 +127,11 @@ single_dimensions = main_config['single_dimensions'][project_name]
 data_file = main_config['data_file'][project_name]
 
 try:
+    covars = main_config['covariates'][project_name]
+except:
+    covars = []
+
+try:
     test_size = main_config['test_size'][project_name]
 except:
     test_size = 0
@@ -160,6 +165,8 @@ if config['calibrate']:
 else:
     calmethod = None
     calparams = None
+
+config['covariates'] = covars
 
 models_dict = {'clf':{
                     'lr':LR,
@@ -217,8 +224,8 @@ for task in tasks:
             if len(config["avoid_stats"]) > 0:
                 features = [col for col in features if all(f'_{x}' not in col for x in config['avoid_stats'])]
             
-            covariates = list(set(regress_out).intersection(set(all_data.columns)))
-            config['covariates'] = covariates
+            covars_regress_out = list(set(regress_out).intersection(set(all_data.columns)))
+            config['regress_out'] = covars_regress_out
 
             if config['add_dem']:
                 for col in set(['sex','age','education','handedness']).intersection(set(all_data.columns)):
@@ -231,8 +238,8 @@ for task in tasks:
                 dimension = dimension + '__dem' if dimension != '' else 'dem'
             
             print(task,dimension)
-            if len(covariates) != 0:
-                all_data = all_data.dropna(subset=covariates,how='any').reset_index(drop=True)
+            if len(covars + covars_regress_out) != 0:
+                all_data = all_data.dropna(subset=covars + covars_regress_out,how='any').reset_index(drop=True)
             
             data = all_data[features + [y_label, config['id_col']]]
             #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
@@ -287,13 +294,19 @@ for task in tasks:
             else:
                 strat_col = None
             
-            covariates_ = all_data[covariates]
-
-            for covariate in covariates:
-                if not isinstance(covariates_[covariate],(int,float)):
-                    covariates_[covariate] = LabelEncoder().fit_transform(covariates_[covariate])
+            for covariate in covars + covars_regress_out:
+                if not isinstance(all_data[covariate],(int,float)):
+                    all_data[covariate] = LabelEncoder().fit_transform(all_data[covariate])
+                    
+            covariates_ = all_data[[config['id_col']] + covars]
+            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
             
+            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
+            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
 
+            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
+            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
+            
             for model_key, model_class in models_dict[config['problem_type']].items():        
                 print(model_key)
                 
@@ -368,7 +381,7 @@ for task in tasks:
                     
                     subfolders = [
                     task, dimension,
-                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(covariates) > 0 else y_label, config['stat_folder'],scoring_metric,
+                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(covariates_regress_out) > 0 else y_label, config['stat_folder'],scoring_metric,
                     'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
                     'filter_outliers' if config['filter_outliers'] and config['problem_type'] == 'reg' else '','rounded' if round_values else '','cut' if cut_values > 0 else '',
                     'shuffle' if config['shuffle_labels'] else '', f'random_seed_{int(random_seed_test)}' if config['test_size'] else ''
@@ -500,7 +513,7 @@ for task in tasks:
                                                                                         calmethod=calmethod,
                                                                                         calparams=calparams,
                                                                                         round_values=round_values,
-                                                                                        covariates=covariates_ if covariates_.shape[1] > 0 else None,
+                                                                                        covariates=covariates_regress_out if covariates_regress_out.shape[1] > 0 else None,
                                                                                         fill_na = fill_na,
                                                                                         regress_out_method = config['regress_out_method']
                                                                                         )

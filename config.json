@@ -10,7 +10,7 @@
     "feature_selection": true,
     "fill_na": -10,
     "init_points": 20.0,
-    "n_seeds_train": 5.0,
+    "n_seeds_train": 10.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
     "n_boot": 1000.0,
@@ -27,8 +27,8 @@
     "cut_values": -1.0,
     "regress_out": [
         "age",
-        "education",
-        "sex"
+        "sex",
+        "education"
     ],
     "regress_out_method": "linear",
     "test_size": 0.0,
@@ -61,17 +61,18 @@
         9,
         27,
         81,
-        243
+        243,
+        729,
+        2187,
+        6561,
+        19683,
+        59049
     ],
     "random_seeds_test": [
         ""
     ],
     "bayes": true,
-    "covariates": [
-        "age",
-        "sex",
-        "education"
-    ],
+    "covariates": [],
     "problem_type": "reg",
     "kfold_folder": "5_folds_5_folds",
     "version": "v_1",

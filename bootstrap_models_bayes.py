@@ -106,8 +106,6 @@ for task in tasks:
                     random_seeds = ['']
 
                 for random_seed in random_seeds:
-                    if random_seed == '':
-                        random_seed = 'nan'
 
                     models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed,version).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
                     

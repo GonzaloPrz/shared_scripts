@@ -180,6 +180,11 @@ for threshold in thresholds:
                 predictions = predictions.drop_duplicates('id')
 
                 regress_out = list(set(json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out']) - set(['']))
+                covars = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['covariates']
+
+                covariates = pd.read_csv(Path(data_dir,data_file))[[id_col]+covars] if len(covars) > 0 else pd.DataFrame()
+                covariates = covariates[covariates[id_col].isin(np.unique(IDs))].reset_index(drop=True) if not covariates.empty else pd.DataFrame()
+
                 regress_out_method = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out_method']
                 fill_na = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['fill_na']
                 
@@ -206,7 +211,6 @@ for threshold in thresholds:
 
                     if not covariates.empty:
                         predictions = pd.merge(predictions,covariates,on=id_col,how='inner')
-                    
                     
                     #if all([shapiro(predictions['y_pred'])[1] > 0.1,shapiro(predictions['y_true'])[1] > 0.1]):
                     #    method = 'pearson'
