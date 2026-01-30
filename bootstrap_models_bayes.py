@@ -187,7 +187,8 @@ for task in tasks:
                             "y_label": y_label,
                             "model_type": model_type,
                             "random_seed_test": random_seed if random_seed != '' else 'nan',
-                            "bootstrap_method_dev": bootstrap_method
+                            "bootstrap_method_dev": bootstrap_method,
+                            "data_file": data_file
                         }
                         
                         for i, metric in enumerate(metrics_names_):

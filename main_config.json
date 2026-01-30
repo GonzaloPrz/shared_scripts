@@ -219,8 +219,8 @@
 
     "data_file": {
                 "crossling_mci":"data_spanish.csv",
-                "affective_pitch_CN_AD": "mean_phrases_CN_AD.csv",
-                "affective_pitch_CN_FTD": "mean_phrases_CN_FTD.csv",
+                "affective_pitch_CN_AD": "mean_windows_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_windows_CN_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",
                 "tell_classifier": "data_MOTOR-LIBRE.csv",
