@@ -200,6 +200,8 @@ for threshold in thresholds:
                 predictions.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,config['version'],f'predictions_dev.csv'),index=False)
 
                 if problem_type == 'reg':
+                    covars = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['covariates']
+
                     sns.set_theme(style="whitegrid")  # Fondo blanco con grid sutil
                     plt.rcParams.update({
                         "font.family": "Arial",
