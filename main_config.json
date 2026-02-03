@@ -58,10 +58,9 @@
                     "bio"
                 ],
                 "Proyecto_Ivo": [
-                    "nps",
-                    "Animales__P",
-                    "brain",
-                    "connectivity"
+                    "Animales",
+                    "P",
+                    "Animales__P"
                 ],
                 "GeroApathy": ["agradable"],
                 "arequipa": [
@@ -196,9 +195,11 @@
                                         "bio":
                                             ["bio"]
                                     },
-                                    "Proyecto_Ivo": {
-                                                "nps": ["executive","memory_im","memory_dif","memory_mmse"]
-                                    },
+                    "Proyecto_Ivo": {
+                                "Animales":["osv","phonological_priming","properties","timing"],
+                                "P":["osv","phonological_priming","properties","timing"],
+                                "Animales__P":["osv","phonological_priming","properties","timing"]
+                            },
 
                     "arequipa": ["verbosity__word_properties__talking_intervals",
                                     "mlu__verbosity__word_properties__talking_intervals",
@@ -237,7 +238,7 @@
                 "tell_classifier": "data_MOTOR-LIBRE.csv",
                 "MCI_classifier_unbalanced": "data_matched_unbalanced_group.csv",
                 "MCI_classifier": "data_matched_group.csv",
-                "Proyecto_Ivo": "all_data_with_means.csv",
+                "Proyecto_Ivo": "all_data_with_new_features.csv",
                 "arequipa": "data_matched_group.csv",
                 "continuo_ivo": "all_data.csv",
                 "MPLS": "all_data.csv",

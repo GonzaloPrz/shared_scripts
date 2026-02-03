@@ -1,15 +1,15 @@
 {
-    "project_name": "crossling_mci",
+    "project_name": "Proyecto_Ivo",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
-    "n_folds_outer": 5.0,
-    "n_folds_inner": 5.0,
-    "n_iter": 20.0,
+    "n_folds_outer": 3.0,
+    "n_folds_inner": 11.0,
+    "n_iter": 15.0,
     "feature_selection": true,
     "fill_na": -10,
-    "init_points": 20.0,
+    "init_points": 50.0,
     "n_seeds_train": 10.0,
     "scaler_name": "StandardScaler",
     "id_col": "id",
@@ -17,7 +17,7 @@
     "n_boot_test": 1000.0,
     "n_boot_train": 0.0,
     "filter_outliers": false,
-    "early_fusion": false,
+    "early_fusion": true,
     "overwrite": false,
     "parallel": true,
     "n_seeds_test": 0,
@@ -25,34 +25,37 @@
     "round_values": false,
     "add_dem": false,
     "cut_values": -1.0,
-    "regress_out": [
-        "age",
-        "sex",
-        "education"
-    ],
+    "regress_out": [],
     "regress_out_method": "linear",
     "test_size": 0.0,
-    "data_file": "data_spanish.csv",
+    "data_file": "all_data_with_new_features.csv",
     "tasks": [
-        "positive",
-        "negative",
-        "negative__positive"
+        "Animales",
+        "P",
+        "Animales__P"
     ],
-    "single_dimensions": [
-        "loudness",
-        "pitch",
-        "sentiment",
-        "spectral",
-        "speech_timing",
-        "voice_quality",
-        "word",
-        "verb",
-        "sentence",
-        "sentiment__word__verb__sentence",
-        "loudness__pitch__spectral__speech_timing__voice_quality"
-    ],
+    "single_dimensions": {
+        "Animales": [
+            "osv",
+            "phonological_priming",
+            "properties",
+            "timing"
+        ],
+        "P": [
+            "osv",
+            "phonological_priming",
+            "properties",
+            "timing"
+        ],
+        "Animales__P": [
+            "osv",
+            "phonological_priming",
+            "properties",
+            "timing"
+        ]
+    },
     "y_labels": [
-        "MMSE"
+        "target"
     ],
     "avoid_stats": [],
     "stat_folder": "",
@@ -73,8 +76,8 @@
     ],
     "bayes": true,
     "covariates": [],
-    "problem_type": "reg",
-    "kfold_folder": "5_folds_5_folds",
+    "problem_type": "clf",
+    "kfold_folder": "3_folds_11_folds",
     "version": "v_1",
-    "scoring_metric": "r2"
+    "scoring_metric": "roc_auc"
 }
