@@ -1,11 +1,11 @@
 {
-    "project_name": "crossling_mci",
+    "project_name": "affective_pitch_CN_FTD",
     "stats": "",
     "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
     "n_folds_outer": 5.0,
-    "n_folds_inner": 5.0,
+    "n_folds_inner": 0.2,
     "n_iter": 20.0,
     "feature_selection": true,
     "fill_na": -10,
@@ -20,39 +20,30 @@
     "early_fusion": false,
     "overwrite": false,
     "parallel": true,
-    "n_seeds_test": 0,
+    "n_seeds_test": 1.0,
     "bootstrap_method": "bca",
     "round_values": false,
     "add_dem": false,
     "cut_values": -1.0,
-    "regress_out": [
-        "age",
-        "education",
-        "sex"
-    ],
+    "regress_out": [],
     "regress_out_method": "linear",
-    "test_size": 0.0,
-    "data_file": "data_spanish.csv",
+    "test_size": 0.2,
+    "data_file": "mean_phrases_CN_FTD.csv",
     "tasks": [
-        "positive",
-        "negative",
-        "negative__positive"
+        "Fugu"
     ],
     "single_dimensions": [
-        "loudness",
-        "pitch",
-        "sentiment",
-        "spectral",
-        "speech_timing",
-        "voice_quality",
-        "word",
-        "verb",
-        "sentence",
-        "sentiment__word__verb__sentence",
-        "loudness__pitch__spectral__speech_timing__voice_quality"
+        "ALL_embedding__sentiment",
+        "ALL_embedding__ALL_timing__sentiment",
+        "POS_embedding__sentiment",
+        "POS_embedding__POS_timing__sentiment",
+        "NEG_embedding__sentiment",
+        "NEG_embedding__NEG_timing__sentiment",
+        "NEU_embedding__sentiment",
+        "NEG_embedding__NEG_timing__sentiment"
     ],
     "y_labels": [
-        "MMSE"
+        "group"
     ],
     "avoid_stats": [],
     "stat_folder": "",
@@ -64,12 +55,12 @@
         243
     ],
     "random_seeds_test": [
-        ""
+        3
     ],
     "bayes": true,
     "covariates": [],
-    "problem_type": "reg",
-    "kfold_folder": "5_folds_5_folds",
-    "version": "v_1",
-    "scoring_metric": "r2"
+    "problem_type": "clf",
+    "kfold_folder": "5_folds_20pct",
+    "version": "v_2",
+    "scoring_metric": "roc_auc"
 }
