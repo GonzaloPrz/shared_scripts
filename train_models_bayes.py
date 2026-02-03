@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
-    parser.add_argument('--regress_out',type=str,default='age_sex_education',help='List of demographic variables to regress out from target variable, separated by "_"')
+    parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
     parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
     return parser.parse_args()
 
@@ -104,7 +104,8 @@ project_name = config['project_name']
 add_dem = config['add_dem']
 round_values = config['round_values']
 cut_values = config['cut_values']
-regress_out = config['regress_out']
+regress_out = list(set(config['regress_out']) - set(['']))
+
 fill_na = config['fill_na'] if config['fill_na'] != 0 else None
 
 logging.info('Configuration loaded. Starting training...')
@@ -381,7 +382,7 @@ for task in tasks:
                     
                     subfolders = [
                     task, dimension,
-                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(covariates_regress_out) > 0 else y_label, config['stat_folder'],scoring_metric,
+                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if not covariates_regress_out.empty else y_label, config['stat_folder'],scoring_metric,
                     'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
                     'filter_outliers' if config['filter_outliers'] and config['problem_type'] == 'reg' else '','rounded' if round_values else '','cut' if cut_values > 0 else '',
                     'shuffle' if config['shuffle_labels'] else '', f'random_seed_{int(random_seed_test)}' if config['test_size'] else ''
