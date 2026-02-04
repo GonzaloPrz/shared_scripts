@@ -986,10 +986,6 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
             y_pred[val_index] = np.round(outputs[val_index],decimals=0) if round_values else outputs[val_index]
         y_true[val_index] = y_val
         
-    y_true = y_true[~np.isnan(y_true)]
-    y_pred = y_pred[~np.isnan(y_pred)]
-    outputs = outputs[~np.isnan(outputs).all(axis=1)] if problem_type == 'clf' else outputs[~np.isnan(outputs)]
-
     if scoring == 'roc_auc':
         best_score = roc_auc_score(y_true, outputs[:, 1])
     elif scoring == 'norm_expected_cost':
@@ -1016,8 +1012,8 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
                 X_val = X.iloc[val_index][[f for f in features if f != feature]]
                 y_train, y_val = y[train_index], y[val_index]
                 if covariates is not None:
-                    covariates_train = covariates.loc[train_index].reset_index(drop=True)
-                    covariates_val = covariates.loc[val_index].reset_index(drop=True)
+                    covariates_train = covariates.iloc[train_index].reset_index(drop=True)
+                    covariates_val = covariates.iloc[val_index].reset_index(drop=True)
                 else:
                     covariates_train = None
 
@@ -1034,10 +1030,6 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
                     y_pred[val_index] = np.round(outputs[val_index],decimals=0) if round_values else outputs[val_index]
                 y_true[val_index] = y_val
                 
-            y_true = y_true[~np.isnan(y_true)]
-            y_pred = y_pred[~np.isnan(y_pred)]
-            outputs = outputs[~np.isnan(outputs).all(axis=1)] if problem_type == 'clf' else outputs[~np.isnan(outputs)]
-            
             if scoring == 'roc_auc':
                 scorings[feature] = roc_auc_score(y_true, outputs[:, 1])
             elif scoring == 'norm_expected_cost':
