@@ -26,7 +26,8 @@ filter_outliers = bool(config['filter_outliers'])
 round_values = bool(config['round_values'])
 cut_values = bool(config['cut_values'] > 0)
 regress_out = len(config['covariates']) > 0
-version = config['version']
+#version = config['version']
+version = 'v_1'
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -53,7 +54,7 @@ scorings = [config["scoring_metric"]]
 
 tasks = [folder.name for folder in Path(results_dir).iterdir() if folder.is_dir() and folder.name not in ['plots','rocs','feature_importance_bayes','feature_importance','final_models_bayes','final_models']]
 
-output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{version}.csv'.replace('__','_')
+output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
                 
 if not hyp_opt:
         output_filename = output_filename.replace('_hyp_opt','')
@@ -83,6 +84,10 @@ for task in tasks:
     dimensions = [folder.name for folder in Path(results_dir,task).iterdir() if folder.is_dir()]
     for dimension in dimensions:
         print(dimension)
+        
+        if Path(results_dir,task,dimension,kfold_folder).exists() == False:
+            continue
+
         y_labels_ = [folder.name for folder in Path(results_dir,task,dimension,kfold_folder).iterdir() if folder.is_dir()]
          
         for y_label in y_labels_:      
@@ -106,103 +111,107 @@ for task in tasks:
                     random_seeds = ['']
 
                 for random_seed in random_seeds:
+                    versions = [folder.name for folder in Path(path,random_seed).iterdir() if folder.is_dir() and 'v_' in folder.name]
+                    random_seed_ = 'nan' if random_seed == '' else random_seed
 
-                    models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed,version).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
-                    
-                    for model_type in models:
-                        print(model_type)
+                    for version in versions:
+                        models = [filename.stem.split('_')[-1] for filename in Path(path,random_seed,version).glob('*.csv') if all(x not in filename.stem for x in ['train','test'])] 
+                        config['version'] = version
+                        for model_type in models:
+                            print(model_type)
 
-                        if not overwrite and all_results.shape[0] > 0:
-                            row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == str(random_seed))]
-                            if len(row) > 0:
+                            if not overwrite and all_results.shape[0] > 0:
+                                row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == random_seed_) & all_results['version'] == version]
+                                if len(row) > 0:
+                                    continue
+                            
+                            if not utils._build_path(results_dir,task,dimension,y_label,random_seed,f"outputs_{model_type}.npy",config,bayes=True,scoring=scoring).exists():
                                 continue
-                        
-                        if not utils._build_path(results_dir,task,dimension,y_label,random_seed,f"outputs_{model_type}.npy",config,bayes=True,scoring=scoring).exists():
-                            continue
-                        
-                        data_file = json.load(open(utils._build_path(results_dir,task,dimension,y_label,random_seed,"config.json",config,bayes=True,scoring=scoring),'rb'))['data_file']
-
-                        _,outputs, y_dev,_,_,_ = utils._load_data(results_dir,task,dimension,y_label,model_type,random_seed,config,bayes=True,scoring=scoring)
-
-                        problem_type = config['problem_type']
-                        
-                        metrics_names = main_config["metrics_names"][problem_type]
-                        scoring_col = f'{scoring}_extremo'
-
-                        extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
-                        ascending = any(x in scoring for x in ['error','norm'])
-
-                        if (cmatrix is not None) or (np.unique(y_dev).shape[0] > 2):
-                            metrics_names_ = list(set(metrics_names) - set(["roc_auc","f1","precision","recall"]))
-                        else:
-                            metrics_names_ = metrics_names
                             
-                        # Prepare data for bootstrap: a tuple of index arrays to resample
-                        data_indices = (np.arange(y_dev.shape[-1]),)
+                            data_file = json.load(open(utils._build_path(results_dir,task,dimension,y_label,random_seed,"config.json",config,bayes=True,scoring=scoring),'rb'))['data_file']
 
-                        # Define the statistic function with data baked in
-                        stat_func = lambda indices: utils._calculate_metrics(
-                        indices, outputs, y_dev, 
-                        metrics_names_, problem_type, cmatrix)
+                            _,outputs, y_dev,_,_,_ = utils._load_data(results_dir,task,dimension,y_label,model_type,random_seed,config,bayes=True,scoring=scoring)
 
-                        # 1. Calculate the point estimate (the actual difference on the full dataset)
-                        try:
-                            point_estimates = stat_func(data_indices[0])
-                        except Exception as e:
-                            print(f"ERROR calculating metrics for {task}/{dimension}/{y_label} with model {model_type}. Error: {e}")
-                            continue
+                            problem_type = config['problem_type']
                             
-                        # 2. Calculate the bootstrap confidence interval
-                        try:
-                            # Try the more accurate BCa method first
-                            res = bootstrap(
-                                data_indices,
-                                stat_func,
-                                n_resamples=n_boot, # Use configured n_boot
-                                method=config["bootstrap_method"],
-                                vectorized=False,
-                                random_state=42
-                            )
-                            bootstrap_method = config["bootstrap_method"]
+                            metrics_names = main_config["metrics_names"][problem_type]
+                            scoring_col = f'{scoring}_extremo'
 
-                        except ValueError as e:
-                            # If BCa fails (e.g., due to degenerate samples), fall back to percentile
-                            print(f"WARNING: {config['bootstrap_method']} method failed for {tasks}/{dimensions}/{y_label}. Falling back to 'percentile'. Error: {e}")
-                            res = bootstrap(
-                                data_indices,
-                                stat_func,
-                                n_resamples=n_boot,
-                                method='percentile',
-                                vectorized=False,
-                                random_state=42
-                            )
-                            bootstrap_method = 'percentile'
+                            extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
+                            ascending = any(x in scoring for x in ['error','norm'])
 
-                        # Store results for this comparison
-                        result_row = {
-                            "task": task,
-                            "dimension": dimension,
-                            "y_label": y_label,
-                            "model_type": model_type,
-                            "random_seed_test": random_seed if random_seed != '' else 'nan',
-                            "bootstrap_method_dev": bootstrap_method,
-                            "data_file": data_file
-                        }
-                        
-                        for i, metric in enumerate(metrics_names_):
-                            est = point_estimates[i]
-                            ci_low, ci_high = res.confidence_interval.low[i], res.confidence_interval.high[i]
-                            result_row[metric] = f"{est:.2f}, ({ci_low:.2f}, {ci_high:.2f})"
-                        
-                        if all_results.empty:
-                            all_results = pd.DataFrame(result_row,index=[0])
-                        else:
-                            all_results.loc[all_results.shape[0],:] = result_row
+                            if (cmatrix is not None) or (np.unique(y_dev).shape[0] > 2):
+                                metrics_names_ = list(set(metrics_names) - set(["roc_auc","f1","precision","recall"]))
+                            else:
+                                metrics_names_ = metrics_names
+                                
+                            # Prepare data for bootstrap: a tuple of index arrays to resample
+                            data_indices = (np.arange(y_dev.shape[-1]),)
 
-                        all_results.to_csv(Path(results_dir,output_filename),index=False)
+                            # Define the statistic function with data baked in
+                            stat_func = lambda indices: utils._calculate_metrics(
+                            indices, outputs, y_dev, 
+                            metrics_names_, problem_type, cmatrix)
+
+                            # 1. Calculate the point estimate (the actual difference on the full dataset)
+                            try:
+                                point_estimates = stat_func(data_indices[0])
+                            except Exception as e:
+                                print(f"ERROR calculating metrics for {task}/{dimension}/{y_label} with model {model_type}. Error: {e}")
+                                continue
+                                
+                            # 2. Calculate the bootstrap confidence interval
+                            try:
+                                # Try the more accurate BCa method first
+                                res = bootstrap(
+                                    data_indices,
+                                    stat_func,
+                                    n_resamples=n_boot, # Use configured n_boot
+                                    method=config["bootstrap_method"],
+                                    vectorized=False,
+                                    random_state=42
+                                )
+                                bootstrap_method = config["bootstrap_method"]
+
+                            except ValueError as e:
+                                # If BCa fails (e.g., due to degenerate samples), fall back to percentile
+                                print(f"WARNING: {config['bootstrap_method']} method failed for {tasks}/{dimensions}/{y_label}. Falling back to 'percentile'. Error: {e}")
+                                res = bootstrap(
+                                    data_indices,
+                                    stat_func,
+                                    n_resamples=n_boot,
+                                    method='percentile',
+                                    vectorized=False,
+                                    random_state=42
+                                )
+                                bootstrap_method = 'percentile'
+
+                            # Store results for this comparison
+                            result_row = {
+                                "task": task,
+                                "dimension": dimension,
+                                "y_label": y_label,
+                                "model_type": model_type,
+                                "random_seed_test": random_seed_,
+                                "bootstrap_method_dev": bootstrap_method,
+                                "data_file": data_file,
+                                "version": version
+                            }
+                            
+                            for i, metric in enumerate(metrics_names_):
+                                est = point_estimates[i]
+                                ci_low, ci_high = res.confidence_interval.low[i], res.confidence_interval.high[i]
+                                result_row[metric] = f"{est:.2f}, ({ci_low:.2f}, {ci_high:.2f})"
+                            
+                            if all_results.empty:
+                                all_results = pd.DataFrame(result_row,index=[0])
+                            else:
+                                all_results.loc[all_results.shape[0],:] = result_row
+
+                            all_results.to_csv(Path(results_dir,output_filename),index=False)
 
 for scoring in np.unique(scorings):
-    output_filename = f'best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
+    output_filename = f'best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
 
     if not hyp_opt:
         output_filename = output_filename.replace('_hyp_opt','')

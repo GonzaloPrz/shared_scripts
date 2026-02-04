@@ -30,8 +30,6 @@
     "test_size": 0.0,
     "data_file": "all_data_with_new_features.csv",
     "tasks": [
-        "Animales",
-        "P",
         "Animales__P"
     ],
     "single_dimensions": {
@@ -78,6 +76,6 @@
     "covariates": [],
     "problem_type": "clf",
     "kfold_folder": "3_folds_11_folds",
-    "version": "v_1",
+    "version": "v_2",
     "scoring_metric": "roc_auc"
 }
