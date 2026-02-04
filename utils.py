@@ -707,7 +707,7 @@ def compute_metrics(model_index, outputs, y_dev, metrics_names, n_boot, problem_
     for metric in metrics_names:
         metrics_result[metric] = results[metric]
     '''
-    return ci_metrics, fpr, tpr
+    return ci_metrics
 
 def get_metrics_bootstrap(samples, targets, IDs, metrics_names, n_boot=2000,cmatrix=None,priors=None,threshold=None,problem_type='clf',bayesian=False):
     
@@ -1168,7 +1168,7 @@ def scoring_bo(params,model_class,scaler,imputer,X,y,groups,iterator,scoring,pro
     outputs = outputs[~np.isnan(outputs).all(axis=1)] if problem_type == 'clf' else outputs[~np.isnan(outputs)]
 
     if 'error' in scoring:
-        return -eval(scoring)(y_true, outputs)
+        return -eval(scoring)(y_true, outputs if problem_type == 'reg' else y_pred)
     elif scoring == 'norm_expected_cost':
         return -average_cost(targets=np.array(y_true,dtype=int),decisions=np.array(y_pred,dtype=int),costs=cmatrix,priors=priors,adjusted=True)
     elif scoring == 'norm_cross_entropy':
@@ -1216,7 +1216,7 @@ def filter_outliers(data,parametric=True,n_sd=3):
         if parametric:
             data = data[np.abs(data[feature]-np.nanmean(data[feature]))/np.nanstd(data[feature]) < n_sd]
         else:
-            data = data[np.abs(data[feature] - np.nanmedian(data[feature])/np.abs(np.nanpercentile(data[feature],q=75) - np.nanpercentile(data[feature],q=25))) < 1.5]
+            data = data[np.abs(data[feature] - np.nanmedian(data[feature]))/(np.abs(np.nanpercentile(data[feature],q=75) - np.nanpercentile(data[feature],q=25))) < 1.5]
     
     return data
 

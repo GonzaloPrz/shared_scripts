@@ -57,7 +57,6 @@ problem_type = config["problem_type"]
 calibrate = bool(config["calibrate"])
 scoring_metrics = [config['scoring_metric']]
 problem_type = config['problem_type']
-version = config['version']
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -86,9 +85,14 @@ for scoring in scoring_metrics:
         best_models_file = best_models_file.replace('_calibrated','')
     
     best_models = pd.read_csv(Path(results_dir,best_models_file))
+    y_labels = best_models['y_label'].unique()
+
     index_list = itertools.combinations(best_models.index,2)
 
-    all_results = pd.DataFrame()
+    if Path(results_dir, f'ic_diff_{scoring}_bayes.csv').exists():
+        all_results = pd.read_csv(Path(results_dir, f'ic_diff_{scoring}_bayes.csv'))
+    else:
+        all_results = pd.DataFrame()
     
     for index in index_list:
         for y_label in y_labels:
@@ -101,12 +105,18 @@ for scoring in scoring_metrics:
             dimensions = [best_models.loc[index[0],'dimension'], best_models.loc[index[1],'dimension']]
             best1 = best_models[(best_models.task == best_models.loc[index[0],'task']) & (best_models.dimension == best_models.loc[index[0],'dimension']) & (best_models.y_label == y_label)].iloc[0]
             best2 = best_models[(best_models.task == best_models.loc[index[1],'task']) & (best_models.dimension == best_models.loc[index[1],'dimension']) & (best_models.y_label == y_label)].iloc[0]
+
+            if tasks[0] == tasks[1]:
+                continue
             
             if best1.empty or best2.empty:
                 continue
-
+            
+            config['version'] = best1['version']
             # Load data for both models
             IDs1, outputs1, y_dev1,_,_,_ = utils._load_data(results_dir,tasks[0],dimensions[0],y_label,best1.model_type,'',config, bayes=True, scoring=scoring)
+
+            config['version'] = best2['version']
             IDs2, outputs2, y_dev2,_,_,_ = utils._load_data(results_dir, tasks[1], dimensions[1], y_label, best2.model_type, '', config, bayes=True, scoring=scoring)
 
             # Align outputs based on IDs
@@ -170,6 +180,14 @@ for scoring in scoring_metrics:
                 "bootstrap method": bootstrap_method
             }
             
+            if not all_results.empty:
+                row = all_results[(all_results['tasks'] == result_row['tasks']) & 
+                                  (all_results['dimensions'] == result_row['dimensions']) & 
+                                   (all_results['y_label'] == result_row['y_label'])]
+            
+                if not row.empty:
+                    continue
+
             for i, metric in enumerate(metrics_names):
                 est = point_estimates[i]
                 distribution = res.bootstrap_distribution[i] if est > 0 else -res.bootstrap_distribution[i]
@@ -182,6 +200,7 @@ for scoring in scoring_metrics:
             
             all_results.loc[len(all_results.index),:] = result_row
 
+            all_results.to_csv(Path(results_dir, f'ic_diff_{scoring}_bayes.csv'))
     # --- Save Final Results ---
     output_filename = Path(results_dir, f'ic_diff_{scoring}_bayes.csv') # Assumes one scoring metric for filename
     all_results.to_csv(output_filename, index=False)
