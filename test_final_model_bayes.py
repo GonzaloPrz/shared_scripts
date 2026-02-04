@@ -39,6 +39,7 @@ calibrate = bool(config["calibrate"])
 overwrite = bool(config["overwrite"])
 scoring = config['scoring_metric']
 problem_type = config['problem_type']
+regress_out = bool(config['regress_out']) if problem_type == 'reg' else False
 y_labels = config['y_labels']
 
 home = Path(os.environ.get("HOME", Path.home()))
@@ -76,6 +77,9 @@ results_test = pd.DataFrame()
 
 correction = 'fdr_bh'
 
+covariates = pd.read_csv(Path(data_dir,data_file))[[config["id_col"]]+covars]
+
+covariates[id_col] = covariates[id_col].astype(str)
 method = 'pearson'
 
 filename = f'best_best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}_corr_{covars[-1]}.csv'.replace('__','_') if len(covars) > 0 else f'best_best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
@@ -144,43 +148,23 @@ for r, row in best_models.iterrows():
 
     if 'probability' in params.keys():
         params['probability'] = True
-        
-    regress_out = list(set(json.load(open(Path(path_to_results,random_seed_test,'config.json'),'rb'))['regress_out']) - set(['']))
-
-    regress_out_method = json.load(open(Path(path_to_results,random_seed_test,'config.json'),'rb'))['regress_out_method']
-    fill_na = json.load(open(Path(path_to_results,random_seed_test,'config.json'),'rb'))['fill_na']
-    
-    covariates_regress_out = pd.read_csv(Path(data_dir,data_file))[[id_col]+regress_out] if len(regress_out) > 0 else None
-
-    covariates_regress_out_train = covariates_regress_out[covariates_regress_out[id_col].isin(np.unique(IDs_train))].reset_index(drop=True) if covariates_regress_out is not None else None
-    covariates_regress_out_train.drop(id_col,axis=1,inplace=True) if covariates_regress_out is not None else None
-    
-    covariates_regress_out_test = pd.read_csv(Path(path_to_results,random_seed_test,'data_test.csv'))[[id_col]+regress_out] if len(regress_out) > 0 else None
-    covariates_regress_out_test.drop(id_col,axis=1,inplace=True) if covariates_regress_out is not None else None
 
     metrics_names = list(set(metrics_names_) - set(['roc_auc','f1','recall','precision'])) if cmatrix is not None or len(np.unique(y_train)) > 2 else metrics_names_
     
     model = utils.Model(type(trained_model)(**params),type(trained_scaler),type(trained_imputer) if config['fill_na'] != 0 else None)
 
-    covars = config['covariates'] if problem_type == 'reg' else []
-        
-    covariates = pd.read_csv(Path(data_dir,data_file))[[config["id_col"]]+covars]
-
-    covariates[id_col] = covariates[id_col].astype(str)
-
-    model.train(X_train[features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates=covariates_regress_out_train if regress_out else None,fill_na=config['fill_na'])
+    model.train(X_train[features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates=covariates if regress_out else None,fill_na=config['fill_na'])
 
     try:
-        outputs = model.eval(X_test[features],problem_type,covariates=covariates_regress_out_test if regress_out else None,fill_na=config['fill_na'])
+        outputs = model.eval(X_test[features],problem_type,covariates=covariates if regress_out else None,fill_na=config['fill_na'])
     except:
         continue
-
     subfolders = [
             task, dimension,
             config['kfold_folder'], y_label, config['stat_folder'],scoring,
             'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
             'filter_outliers' if config['filter_outliers'] and problem_type == 'reg' else '',
-            'shuffle' if config['shuffle_labels'] else '',random_seed_test,config['version']
+            'shuffle' if config['shuffle_labels'] else '',config['version'],random_seed_test
         ]
 
     path_to_save = results_dir.joinpath(*[str(s) for s in subfolders if s])
@@ -231,15 +215,15 @@ for r, row in best_models.iterrows():
         best_models.loc[r,f'{metric}_holdout'] = f"{est:.3f}, ({ci_low:.3f}, {ci_high:.3f})"
     
     if problem_type == 'reg':
-        predictions_test = pd.DataFrame({'id':IDs_test.flatten(),'y_pred':outputs.flatten(),'y_true':y_test.flatten()})
+        predictions = pd.DataFrame({'id':IDs_test.flatten(),'y_pred':outputs.flatten(),'y_true':y_test.flatten()})
     else:
         _, y_pred = utils.get_metrics_clf(outputs, y_test, [], cmatrix=cmatrix, priors=None, threshold=None)
-        predictions_test = {'id':IDs_test.values.flatten() if isinstance(IDs_test,pd.Series) else IDs_test,'y_pred':y_pred.flatten(),'y_true':y_test.values.flatten() if isinstance(y_test,pd.Series) else y_test.flatten()}
+        predictions = {'id':IDs_test.values.flatten() if isinstance(IDs_test,pd.Series) else IDs_test,'y_pred':y_pred.flatten(),'y_true':y_test.values.flatten() if isinstance(y_test,pd.Series) else y_test.flatten()}
         for c in range(outputs.shape[-1]):
-            predictions_test[f'outputs_class_{c}'] = outputs[:,c].flatten()
-        predictions_test = pd.DataFrame(predictions_test)
+            predictions[f'outputs_class_{c}'] = outputs[:,c].flatten()
+        predictions = pd.DataFrame(predictions)
 
-    predictions_test = predictions_test.drop_duplicates('id')
+    predictions = predictions.drop_duplicates('id')
 
     if problem_type == 'reg':
         try:
@@ -259,31 +243,23 @@ for r, row in best_models.iterrows():
             "xtick.labelsize": 20,
             "ytick.labelsize": 20
         })
-        covars = ['age','education','sex'] if '_res_' not in y_label else []
-        if 'data_file_test' in main_config.keys():
-            data_file_test = main_config['data_file_test'][project_name]
-            covariates_test = pd.read_csv(Path(data_dir,data_file_test))[[id_col]+covars]
-        else:
-            covariates_test = pd.read_csv(Path(data_dir,data_file))[[id_col]+covars]
-
-        covariates_test[id_col] = covariates_test[id_col].astype(str)
-        predictions_test[id_col] = predictions_test[id_col].astype(str)
-
+        
         if not covariates.empty:
-            predictions_test = pd.merge(predictions_test,covariates_test,on=id_col,how='inner')
+            predictions = pd.merge(predictions,covariates,on=config["id_col"],how='inner')
 
         Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'], random_seed_test).mkdir(exist_ok=True,parents=True)
 
         with open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed_test,f'predictions_test.npy'),'wb') as f:
-            pickle.dump(predictions_test,f)
-        predictions_test.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed_test,f'predictions_test.csv'),index=False)
+            pickle.dump(predictions,f)
+        predictions.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed_test,f'predictions_test.csv'),index=False)
+    
 
         try:
-            results = partial_corr(data=predictions_test,x='y_pred',y='y_true',covar=covars,method=method)
+            results = partial_corr(data=predictions,x='y_pred',y='y_true',covar=covars,method=method)
             n, r, ci, p = results.loc[method,'n'], results.loc[method,'r'], results.loc[method,'CI95%'], results.loc[method,'p-val']
         except:
-            r, p = pearsonr(predictions_test['y_pred'], predictions_test['y_true']) if method == 'pearson' else spearmanr(predictions_test['y_true'], predictions_test['y_pred'])
-            n = predictions_test.shape[0]
+            r, p = pearsonr(predictions['y_pred'], predictions['y_true']) if method == 'pearson' else spearmanr(predictions['y_true'], predictions['y_pred'])
+            n = predictions.shape[0]
             ci = np.nan
 
         best_models.loc[idx,['r_holdout','p_value_corrected_holdout','p_holdout','method','n_holdout','95_ci_holdout','covars_holdout','correction_method_holdout']] = [r,np.nan,p,method,n,str(ci),str(covars),np.nan]
@@ -297,7 +273,7 @@ for r, row in best_models.iterrows():
 
         plt.figure(figsize=(8, 6))
         sns.regplot(
-            x='y_pred', y='y_true', data=predictions_test,
+            x='y_pred', y='y_true', data=predictions,
             scatter_kws={'alpha': 0.6, 's': 50, 'color': '#c9a400'},  # color base
             line_kws={'color': 'black', 'linewidth': 2}
         )

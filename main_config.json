@@ -58,10 +58,7 @@
                     "bio"
                 ],
                 "Proyecto_Ivo": [
-                    "nps",
-                    "Animales__P",
-                    "brain",
-                    "connectivity"
+                    "Animales__P"
                 ],
                 "GeroApathy": ["agradable"],
                 "arequipa": [
@@ -115,10 +112,25 @@
     "single_dimensions": {
                     "crossling_mci":["loudness","pitch","sentiment","spectral","speech_timing","voice_quality","word","verb","sentence",
                 "sentiment__word__verb__sentence", "loudness__pitch__spectral__speech_timing__voice_quality"],
-                    "affective_pitch_CN_AD": ["ALL_embedding__sentiment","ALL_embedding__ALL_timing__sentiment","POS_embedding__sentiment","POS_embedding__POS_timing__sentiment","NEG_embedding__sentiment","NEG_embedding__NEG_timing__sentiment","NEU_embedding__sentiment","NEG_embedding__NEG_timing__sentiment"
+                    "affective_pitch_CN_AD": ["ALL_energy__ALL_pitch__ALL_timing__sentiment","ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__sentiment","ALL_pitch__ALL_timing__sentiment",
+                                              "ALL_energy__ALL_pitch__speech_timing__sentiment","ALL_energy__speech_timing__sentiment","ALL_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__NEG_timing__sentiment","NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__sentiment","NEG_pitch__NEG_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__speech_timing__sentiment","NEG_energy__speech_timing__sentiment","NEG_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "NEU_energy__NEU_pitch__NEU_timing__sentiment","NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__sentiment","NEU_pitch__NEU_timing__sentiment",
+                                              "NEU_energy__NEU_pitch__speech_timing__sentiment","NEU_energy__speech_timing__sentiment","NEU_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment",
+                                              "POS_energy__POS_pitch__speech_timing__sentiment","POS_energy__speech_timing__sentiment","POS_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "energy_baseline","pitch_baseline","speech_timing","energy_baseline__pitch_baseline","energy_baseline__speech_timing","pitch_baseline__speech_timing","energy_baseline__pitch_baseline__speech_timing"
                                             ],
-                    "affective_pitch_CN_FTD": ["ALL_embedding__sentiment","ALL_embedding__ALL_timing__sentiment","POS_embedding__sentiment","POS_embedding__POS_timing__sentiment","NEG_embedding__sentiment","NEG_embedding__NEG_timing__sentiment","NEU_embedding__sentiment","NEG_embedding__NEG_timing__sentiment"
-                                            ],
+                    "affective_pitch_CN_FTD": ["ALL_energy__ALL_pitch__ALL_timing__sentiment","ALL_energy__sentiment","ALL_pitch__sentiment","ALL_timing__sentiment","ALL_energy__ALL_pitch__sentiment","ALL_energy__ALL_timing__sentiment","ALL_pitch__sentiment","ALL_pitch__ALL_timing__sentiment",
+                                              "ALL_energy__ALL_pitch__speech_timing__sentiment","ALL_energy__speech_timing__sentiment","ALL_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__NEG_timing__sentiment","NEG_energy__sentiment","NEG_pitch__sentiment","NEG_timing__sentiment","NEG_energy__NEG_pitch__sentiment","NEG_energy__NEG_timing__sentiment","NEG_pitch__sentiment","NEG_pitch__NEG_timing__sentiment",
+                                              "NEG_energy__NEG_pitch__speech_timing__sentiment","NEG_energy__speech_timing__sentiment","NEG_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "NEU_energy__NEU_pitch__NEU_timing__sentiment","NEU_energy__sentiment","NEU_pitch__sentiment","NEU_timing__sentiment","NEU_energy__NEU_pitch__sentiment","NEU_energy__NEU_timing__sentiment","NEU_pitch__sentiment","NEU_pitch__NEU_timing__sentiment",
+                                              "NEU_energy__NEU_pitch__speech_timing__sentiment","NEU_energy__speech_timing__sentiment","NEU_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "POS_energy__POS_pitch__POS_timing__sentiment","POS_energy__sentiment","POS_pitch__sentiment","POS_timing__sentiment","POS_energy__POS_pitch__sentiment","POS_energy__POS_timing__sentiment","POS_pitch__sentiment","POS_pitch__POS_timing__sentiment",
+                                              "POS_energy__POS_pitch__speech_timing__sentiment","POS_energy__speech_timing__sentiment","POS_pitch__speech_timing__sentiment","speech_timing__sentiment",
+                                              "energy_baseline","pitch_baseline","speech_timing","energy_baseline__pitch_baseline","energy_baseline__speech_timing","pitch_baseline__speech_timing","energy_baseline__pitch_baseline__speech_timing"],
 
                     "53_ceac":{"phq":["gemini"],
                                 "cachorro":["phq9__sentiment__verbosity"],
@@ -181,9 +193,11 @@
                                         "bio":
                                             ["bio"]
                                     },
-                                    "Proyecto_Ivo": {
-                                                "nps": ["executive","memory_im","memory_dif","memory_mmse"]
-                                    },
+                    "Proyecto_Ivo": {
+                                "Animales":["osv","phonological_priming","properties","timing"],
+                                "P":["osv","phonological_priming","properties","timing"],
+                                "Animales__P":["osv","phonological_priming","properties","timing"]
+                            },
 
                     "arequipa": ["verbosity__word_properties__talking_intervals",
                                     "mlu__verbosity__word_properties__talking_intervals",
@@ -215,14 +229,14 @@
 
     "data_file": {
                 "crossling_mci":"data_spanish.csv",
-                "affective_pitch_CN_AD": "mean_windows_CN_AD.csv",
-                "affective_pitch_CN_FTD": "mean_phrases_CN_FTD.csv",
+                "affective_pitch_CN_AD": "mean_phrases_CN_AD.csv",
+                "affective_pitch_CN_FTD": "mean_windows_CN_FTD.csv",
                 "impact_dementia":"all_data.csv",
                 "53_ceac": "all_data.csv",
                 "tell_classifier": "data_MOTOR-LIBRE.csv",
                 "MCI_classifier_unbalanced": "data_matched_unbalanced_group.csv",
                 "MCI_classifier": "data_matched_group.csv",
-                "Proyecto_Ivo": "all_data_with_means.csv",
+                "Proyecto_Ivo": "all_data_with_new_features.csv",
                 "arequipa": "data_matched_group.csv",
                 "continuo_ivo": "all_data.csv",
                 "MPLS": "all_data.csv",

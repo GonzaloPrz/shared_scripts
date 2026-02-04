@@ -31,15 +31,15 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='affective_pitch_CN_FTD',type=str,help='Project name')
+    parser.add_argument('--project_name', default='Proyecto_Ivo',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
-    parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
-    parser.add_argument('--n_folds_inner', type=float, default=0.2, help='Number of folds for cross validation (inner loop)')
-    parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
-    parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
+    parser.add_argument('--n_folds_outer', type=float, default=3, help='Number of folds for cross validation (outer loop)')
+    parser.add_argument('--n_folds_inner', type=float, default=11, help='Number of folds for cross validation (inner loop)')
+    parser.add_argument('--init_points', type=int, default=50, help='Number of random initial points to test during Bayesian optimization')
+    parser.add_argument('--n_iter', type=int, default=15, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
     parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=5,help='Number of seeds for cross-validation training')
@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument('--n_boot_train',type=int,default=0,help='Number of bootstrap iterations for training')
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
-    parser.add_argument('--early_fusion',type=int,default=0,help='Whether to perform early fusion')
+    parser.add_argument('--early_fusion',type=int,default=1,help='Whether to perform early fusion')
     parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
     parser.add_argument('--parallel',type=int,default=1,help='Whether to parallelize processes or not')
     parser.add_argument('--n_seeds_test',type=int,default=1,help='Number of seeds for testing')
@@ -90,7 +90,7 @@ def load_configuration(args):
         round_values = bool(args.round_values),
         add_dem = bool(args.add_dem),
         cut_values = float(args.cut_values),
-        regress_out = sorted(list(args.regress_out.split('_'))),
+        regress_out = list(set(sorted(list(args.regress_out.split('_')))) - set([''])),
         regress_out_method = str(args.regress_out_method)
     )
 
@@ -104,8 +104,7 @@ project_name = config['project_name']
 add_dem = config['add_dem']
 round_values = config['round_values']
 cut_values = config['cut_values']
-regress_out = list(set(config['regress_out']) - set(['']))
-
+regress_out = config['regress_out']
 fill_na = config['fill_na'] if config['fill_na'] != 0 else None
 
 logging.info('Configuration loaded. Starting training...')
@@ -173,7 +172,7 @@ models_dict = {'clf':{
                     'lr':LR,
                     'knnc':KNNC,
                     'xgb':xgboost,
-                    'rf':RandomForestClassifier
+                    #'rf':RandomForestClassifier
                     #'qda':QDA,
                     #'lda': LDA
                     },
@@ -382,7 +381,7 @@ for task in tasks:
                     
                     subfolders = [
                     task, dimension,
-                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if not covariates_regress_out.empty else y_label, config['stat_folder'],scoring_metric,
+                    config['kfold_folder'], f'{y_label}_res_{config["regress_out_method"]}' if len(regress_out) > 0 else y_label, config['stat_folder'],scoring_metric,
                     'hyp_opt' if config['n_iter'] > 0 else '','feature_selection' if config['feature_selection'] else '',
                     'filter_outliers' if config['filter_outliers'] and config['problem_type'] == 'reg' else '','rounded' if round_values else '','cut' if cut_values > 0 else '',
                     'shuffle' if config['shuffle_labels'] else '', f'random_seed_{int(random_seed_test)}' if config['test_size'] else ''
