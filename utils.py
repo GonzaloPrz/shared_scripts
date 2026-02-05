@@ -222,7 +222,7 @@ def _calculate_metrics(indices, outputs, y, metrics_names, prob_type, cost_matri
     # If a resample is degenerate (e.g., missing a class), metric calculation is impossible.
     # Return NaNs to signal this. The 'bca' method will fail, triggering our fallback.
     if prob_type == 'clf':
-        while np.unique(resampled_y).shape[0] != np.unique(y).shape[0]:
+        while np.unique(resampled_y).shape[0] != len(np.unique(y)):
             np.random.seed(np.random.randint(0,1e6))
             indices = np.random.choice(np.arange(len(indices)),len(indices),replace=True)
             resampled_y = y[:, :, indices].ravel()
@@ -545,7 +545,8 @@ def CVT(model, scaler, imputer, X, y, iterator, random_seeds_train, hyperp, feat
     IDs_dev : np.array
         Array of IDs for samples used in predictions across folds.
     """
-    
+    n_classes = len(np.unique(y))
+
     features = X.columns
     if not isinstance(thresholds,list):
         thresholds = [thresholds]
@@ -558,7 +559,7 @@ def CVT(model, scaler, imputer, X, y, iterator, random_seeds_train, hyperp, feat
         n_samples = int(X.shape[0]*iterator.test_size)
     else:
         n_samples = X.shape[0]
-    all_outputs = np.empty((hyperp.shape[0]*len(feature_sets)*len(thresholds), len(random_seeds_train), n_samples, len(np.unique(y)))) if problem_type == 'clf' else np.empty((hyperp.shape[0]*len(feature_sets)*len(thresholds), len(random_seeds_train), n_samples))
+    all_outputs = np.empty((hyperp.shape[0]*len(feature_sets)*len(thresholds), len(random_seeds_train), n_samples, n_classes)) if problem_type == 'clf' else np.empty((hyperp.shape[0]*len(feature_sets)*len(thresholds), len(random_seeds_train), n_samples))
 
     all_cal_outputs = np.empty_like(all_outputs)
     X_dev = np.empty((hyperp.shape[0]*len(feature_sets)*len(thresholds), len(random_seeds_train), n_samples, X.shape[1]))
@@ -798,9 +799,9 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
         Array of IDs for samples used in predictions across outer folds.
         
     """
-    
+    n_classes = len(np.unique(y))
     if (cmatrix is None) & (problem_type == 'clf'):
-        cmatrix = CostMatrix.zero_one_costs(K=len(np.unique(y)))
+        cmatrix = CostMatrix.zero_one_costs(K=n_classes)
 
     features = X.columns.tolist()  # once, near the top
     
@@ -820,8 +821,8 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
         iterator_outer.random_state = random_seed
 
         n_samples = X.shape[0] 
-
-        outputs_best_r = np.full((n_samples,len(np.unique(y))),np.nan) if problem_type == 'clf' else np.full((n_samples),np.nan)
+        n_classes = len(np.unique(y))
+        outputs_best_r = np.full((n_samples,n_classes),np.nan) if problem_type == 'clf' else np.full((n_samples),np.nan)
 
         y_true_r = np.full(n_samples,np.nan)
 
@@ -846,14 +847,6 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
             IDs_dev = IDs.loc[train_index_out].reset_index(drop=True)
             
             IDs_val_r[test_index_out] = IDs.loc[test_index_out].reset_index(drop=True)
-
-            #scaler_ = scaler().fit(X_dev)
-            #imputer_ = imputer().fit(X_dev)
-
-            #X_dev = pd.DataFrame(columns=X.columns,data=imputer_.transform(pd.DataFrame(columns=X_dev.columns,data=scaler_.transform(X_dev))))
-            #X_dev  = X_dev.reindex(columns=features)
-            #X_test = X_test.reindex(columns=features)
-            #X_test = pd.DataFrame(columns=X.columns,data=imputer_.transform(pd.DataFrame(columns=X_test.columns,data=scaler_.transform(X_test))))
             print(f'Random seed {r+1}, Fold {k+1}')
             
             if n_iter > 0:
@@ -891,10 +884,10 @@ def nestedCVT(model_class,scaler,imputer,X,y,n_iter,iterator_outer,iterator_inne
             
             if problem_type == 'clf':
                 outputs_best_ = model.eval(X_test[best_features],problem_type,covariates_test,fill_na)
-                if isinstance(threshold,float) & (len(np.unique(y)) == 2):
-                    y_pred_best_ = [1 if x > threshold else 0 for x in outputs_best_r[test_index_out][:,1]]
+                if isinstance(threshold,float) & (n_classes == 2):
+                    y_pred_best_ = [1 if x > threshold else 0 for x in outputs_best_[test_index_out][:,1]]
                 else:
-                    y_pred_best_= bayes_decisions(scores=outputs_best_r[test_index_out],costs=cmatrix,priors=priors,score_type='log_posteriors')[0]
+                    y_pred_best_= bayes_decisions(scores=outputs_best_[test_index_out],costs=cmatrix,priors=priors,score_type='log_posteriors')[0]
                 
                 y_pred_best_r[test_index_out] = np.round(y_pred_best_,decimals=0) if round_values else y_pred_best_
 
@@ -952,13 +945,14 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
         List of selected features after recursive feature elimination.
         
     """
-
+    n_samples = X.shape[0]
+    n_classes = len(np.unique(y))
     features = list(X.columns)
     
     # Ascending if error, loss, or other metrics where lower is better
     ascending = any(x in scoring for x in ['error', 'loss', 'cost'])
 
-    outputs = np.full((X.shape[0], len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
+    outputs = np.full((X.shape[0], n_classes),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
     y_pred = np.full(X.shape[0],fill_value=np.nan)
     y_true = np.full(X.shape[0],fill_value=np.nan)
 
@@ -977,8 +971,8 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
         
         if problem_type == 'clf':
             outputs[val_index] = model.eval(X_val,problem_type,covariates_val,fill_na)
-            if isinstance(threshold,float) & (len(np.unique(y)) == 2):
-                y_pred[val_index] = [1 if x > threshold else 0 for x in outputs[:,1]]
+            if isinstance(threshold,float) & (n_classes == 2):
+                y_pred[val_index] = [1 if x > threshold else 0 for x in outputs[val_index,1]]
             else:
                 y_pred[val_index] = bayes_decisions(scores=outputs[val_index],costs=cmatrix,priors=priors,score_type='log_posteriors')[0]
         else:
@@ -1003,7 +997,7 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
         scorings = {}  # Dictionary to hold scores for each feature removal
         
         for feature in features:
-            outputs = np.full((X.shape[0], len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
+            outputs = np.full((X.shape[0], n_classes),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
             y_pred = np.full(X.shape[0],fill_value=np.nan)
             y_true = np.full(X.shape[0],fill_value=np.nan)
             
@@ -1021,8 +1015,8 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
                 
                 if problem_type == 'clf':
                     outputs[val_index] = model.eval(X_val,problem_type,covariates_val,fill_na)
-                    if isinstance(threshold,float) & (len(np.unique(y)) == 2):
-                        y_pred[val_index] = [1 if x > threshold else 0 for x in outputs[:,1]]
+                    if isinstance(threshold,float) & (n_classes == 2):
+                        y_pred[val_index] = [1 if x > threshold else 0 for x in outputs[val_index,1]]
                     else:
                         y_pred[val_index] = bayes_decisions(scores=outputs[val_index],costs=cmatrix,priors=priors,score_type='log_posteriors')[0]
                 else:
@@ -1138,7 +1132,7 @@ def scoring_bo(params,model_class,scaler,imputer,X,y,groups,iterator,scoring,pro
         
     y_true = np.full(X.shape[0],fill_value=np.nan)
     y_pred = np.full(X.shape[0],fill_value=np.nan)
-    outputs = np.full((X.shape[0],len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
+    outputs = np.full((X.shape[0],n_classes),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
     
     if isinstance(y,pd.Series):
         y = y.values
@@ -1155,7 +1149,7 @@ def scoring_bo(params,model_class,scaler,imputer,X,y,groups,iterator,scoring,pro
         outputs[test_index] = model.eval(X.loc[test_index].reset_index(drop=True),problem_type,covariates_val,fill_na)
 
         if problem_type == 'clf':
-            if isinstance(threshold,float) & (len(np.unique(y)) == 2):
+            if isinstance(threshold,float) & (n_classes == 2):
                 y_pred[test_index] = [1 if x > threshold else 0 for x in outputs[test_index,1]]
             else:
                 y_pred[test_index] = bayes_decisions(scores=outputs[test_index],costs=cmatrix,priors=priors,score_type='log_posteriors')[0]
