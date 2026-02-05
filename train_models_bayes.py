@@ -58,7 +58,8 @@ def parse_args():
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
     parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
-    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
+    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out'),
+    parser.add_argument('--scoring', type=str, default='', help='Scoring method for model selection')
     return parser.parse_args()
 
 def load_configuration(args):
@@ -91,7 +92,8 @@ def load_configuration(args):
         add_dem = bool(args.add_dem),
         cut_values = float(args.cut_values),
         regress_out = list(set(sorted(list(args.regress_out.split('_')))) - set([''])),
-        regress_out_method = str(args.regress_out_method)
+        regress_out_method = str(args.regress_out_method),
+        scoring = str(args.scoring)
     )
 
     return config
@@ -251,10 +253,16 @@ for task in tasks:
     
             if len(np.unique(data[y_label])) > 3:
                 config['problem_type'] = 'reg'
-                scoring_metric = 'r2'
+                if config['scoring'] != '':
+                    scoring_metric = config['scoring']
+                else:
+                    scoring_metric = 'r2'
             else:
                 config['problem_type'] = 'clf'
-                scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
+                if config['scoring'] != '':
+                    scoring_metric = config['scoring']
+                else:
+                    scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
 
             if config['problem_type'] == 'reg' and config['filter_outliers']:
                 all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
