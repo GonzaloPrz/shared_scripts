@@ -725,13 +725,12 @@ def get_metrics_bootstrap(samples, targets, IDs, metrics_names, n_boot=2000,cmat
         sorted_IDs = [IDs[indices_]]
         
         for b in range(n_boot):
-            np.random.seed(b)
-            indices = np.random.choice(indices_, len(indices_), replace=True)
-            sorted_IDs.append(sorted_IDs[0][indices])
+            rng = np.random.default_rng(seed=b)
+            indices = rng.choice(indices_, len(indices_), replace=True)
 
             while len(np.unique(targets[indices])) == 1:
-                np.random.seed(b)
-                indices = np.random.choice(indices_, len(indices_), replace=True)
+                indices = rng.choice(indices_, len(indices_), replace=True)
+
             if problem_type == 'clf':
                 metric_value, y_pred = get_metrics_clf(samples[indices], targets[indices], [metric], cmatrix,priors,threshold,weights)
             else:
@@ -958,9 +957,11 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
     # Ascending if error, loss, or other metrics where lower is better
     ascending = any(x in scoring for x in ['error', 'loss', 'cost'])
 
-    outputs = np.full((X.shape[0], len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
-    y_pred = np.full(X.shape[0],fill_value=np.nan)
-    y_true = np.full(X.shape[0],fill_value=np.nan)
+    n_samples = X.shape[0]
+
+    outputs = np.full((n_samples, len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(n_samples,fill_value=np.nan)
+    y_pred = np.full(n_samples,fill_value=np.nan)
+    y_true = np.full(n_samples,fill_value=np.nan)
 
     for train_index, val_index in iterator.split(X, y, groups):
         X_train = X.loc[train_index]
@@ -985,7 +986,11 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
             outputs[val_index] = model.eval(X_val,problem_type,covariates_val,fill_na)
             y_pred[val_index] = np.round(outputs[val_index],decimals=0) if round_values else outputs[val_index]
         y_true[val_index] = y_val
-        
+    
+    outputs = outputs[~np.isnan(y_true)]
+    y_pred = y_pred[~np.isnan(y_true)]
+    y_true = y_true[~np.isnan(y_true)]
+
     if scoring == 'roc_auc':
         best_score = roc_auc_score(y_true, outputs[:, 1])
     elif scoring == 'norm_expected_cost':
@@ -1003,9 +1008,9 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
         scorings = {}  # Dictionary to hold scores for each feature removal
         
         for feature in features:
-            outputs = np.full((X.shape[0], len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(X.shape[0],fill_value=np.nan)
-            y_pred = np.full(X.shape[0],fill_value=np.nan)
-            y_true = np.full(X.shape[0],fill_value=np.nan)
+            outputs = np.full((n_samples, len(np.unique(y))),fill_value=np.nan) if problem_type == 'clf' else np.full(n_samples,fill_value=np.nan)
+            y_pred = np.full(n_samples,fill_value=np.nan)
+            y_true = np.full(n_samples,fill_value=np.nan)
             
             for train_index, val_index in iterator.split(X, y, groups):
                 X_train = X.iloc[train_index][[f for f in features if f != feature]]
@@ -1029,7 +1034,11 @@ def rfe(model, X, y, groups, iterator, scoring='roc_auc', problem_type='clf',cma
                     outputs[val_index] = model.eval(X_val,problem_type,covariates_val,fill_na)
                     y_pred[val_index] = np.round(outputs[val_index],decimals=0) if round_values else outputs[val_index]
                 y_true[val_index] = y_val
-                
+            
+            outputs = outputs[~np.isnan(y_true)]
+            y_pred = y_pred[~np.isnan(y_true)]
+            y_true = y_true[~np.isnan(y_true)]
+
             if scoring == 'roc_auc':
                 scorings[feature] = roc_auc_score(y_true, outputs[:, 1])
             elif scoring == 'norm_expected_cost':

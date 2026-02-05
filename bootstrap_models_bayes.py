@@ -121,7 +121,7 @@ for task in tasks:
                             print(model_type)
 
                             if not overwrite and all_results.shape[0] > 0:
-                                row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == random_seed_) & all_results['version'] == version]
+                                row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == random_seed_) & (all_results['version'] == version)]
                                 if len(row) > 0:
                                     continue
                             
@@ -135,10 +135,10 @@ for task in tasks:
                             problem_type = config['problem_type']
                             
                             metrics_names = main_config["metrics_names"][problem_type]
-                            scoring_col = f'{scoring}_extremo'
+                            scoring_col = f'mean_{scoring}'
 
-                            extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
-                            ascending = any(x in scoring for x in ['error','norm'])
+                            #extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
+                            #ascending = any(x in scoring for x in ['error','norm'])
 
                             if (cmatrix is not None) or (np.unique(y_dev).shape[0] > 2):
                                 metrics_names_ = list(set(metrics_names) - set(["roc_auc","f1","precision","recall"]))
@@ -236,12 +236,14 @@ for scoring in np.unique(scorings):
     all_results['random_seed_test'] = all_results['random_seed_test'].astype(str).apply(lambda x: str(x).lower())
 
     y_labels_ = all_results['y_label'].unique()
-    best_best_models = pd.DataFrame(columns=all_results.columns)
 
     random_seeds_test = all_results['random_seed_test'].unique()
 
-    scoring_col = f'{scoring}_extremo'
-    extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
+    #scoring_col = f'{scoring}_extremo'
+    scoring_col = f'mean_{scoring}'
+    best_best_models = pd.DataFrame(columns=list(all_results.columns) + [scoring_col])
+ 
+    #extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
     ascending = any(x in scoring for x in ['error','norm'])
 
     for random_seed_test in random_seeds_test: 
@@ -257,8 +259,8 @@ for scoring in np.unique(scorings):
                 for y_label in y_labels_:
                     best_best_models_ = all_results[(all_results['task'] == task) & (all_results['y_label'] == y_label) & (all_results['dimension'] == dimension) & (all_results['random_seed_test'].astype(str) == str(random_seed_test))]
 
-                    #if best_best_models_.shape[0] == 0:
-                    #    continue
+                    if best_best_models_.shape[0] == 0:
+                        continue
                     try:
                         best_best_models_[scoring_col] = best_best_models_[scoring].apply(lambda x: float(x.split(', ')[0]))
                     except:
@@ -273,11 +275,6 @@ for scoring in np.unique(scorings):
                         continue
 
                     best_best_models.loc[best_best_models.shape[0],:] = best_best_models_append
-
-    try:
-        best_best_models[scoring_col] = best_best_models[scoring].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
-    except:
-        best_best_models[scoring_col] = best_best_models[f'{scoring}_score'].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
 
     best_best_models = best_best_models.sort_values(by=['y_label',scoring_col],ascending=ascending).reset_index(drop=True)
 
