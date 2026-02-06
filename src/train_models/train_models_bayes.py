@@ -22,24 +22,24 @@ import logging,sys,os,argparse
 from psrcal.calibration import AffineCalLogLoss
 from sklearn.preprocessing import LabelEncoder
 
-import utils
-
-from expected_cost.ec import CostMatrix
+from src.utils.utils import *
+from src.utils.cv_utils import *
+from src.utils.utils import PROJECT_ROOT
 
 ##---------------------------------PARAMETERS---------------------------------##
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Train models with hyperparameter optimization and feature selection'
     )
-    parser.add_argument('--project_name', default='Proyecto_Ivo',type=str,help='Project name')
+    parser.add_argument('--project_name', default='affective_pitch_CN_FTD',type=str,help='Project name')
     parser.add_argument('--stats', type=str, default='', help='Stats to be considered (default = all)')
     parser.add_argument('--shuffle_labels', type=int, default=0, help='Shuffle labels flag (1 or 0)')
     parser.add_argument('--stratify', type=int, default=1, help='Stratification flag (1 or 0)')
     parser.add_argument('--calibrate', type=int, default=0, help='Whether to calibrate models')
-    parser.add_argument('--n_folds_outer', type=float, default=3, help='Number of folds for cross validation (outer loop)')
-    parser.add_argument('--n_folds_inner', type=float, default=11, help='Number of folds for cross validation (inner loop)')
-    parser.add_argument('--init_points', type=int, default=50, help='Number of random initial points to test during Bayesian optimization')
-    parser.add_argument('--n_iter', type=int, default=15, help='Number of hyperparameter iterations')
+    parser.add_argument('--n_folds_outer', type=float, default=5, help='Number of folds for cross validation (outer loop)')
+    parser.add_argument('--n_folds_inner', type=float, default=0.2, help='Number of folds for cross validation (inner loop)')
+    parser.add_argument('--init_points', type=int, default=20, help='Number of random initial points to test during Bayesian optimization')
+    parser.add_argument('--n_iter', type=int, default=20, help='Number of hyperparameter iterations')
     parser.add_argument('--feature_selection',type=int,default=1,help='Whether to perform feature selection with RFE or not')
     parser.add_argument('--fill_na',type=int,default=-10,help='Values to fill nan with. Default (=0) means no filling (imputing instead)')
     parser.add_argument('--n_seeds_train',type=int,default=5,help='Number of seeds for cross-validation training')
@@ -49,16 +49,17 @@ def parse_args():
     parser.add_argument('--n_boot_train',type=int,default=0,help='Number of bootstrap iterations for training')
     parser.add_argument('--n_boot_test',type=int,default=1000,help='Number of bootstrap iterations for testing')
     parser.add_argument('--filter_outliers',type=int,default=0,help='Whether to filter outliers in regression problems')
-    parser.add_argument('--early_fusion',type=int,default=1,help='Whether to perform early fusion')
+    parser.add_argument('--early_fusion',type=int,default=0,help='Whether to perform early fusion')
     parser.add_argument('--overwrite',type=int,default=0,help='Whether to overwrite past results or not')
-    parser.add_argument('--parallel',type=int,default=1,help='Whether to parallelize processes or not')
+    parser.add_argument('--parallel',type=int,default=0,help='Whether to parallelize processes or not')
     parser.add_argument('--n_seeds_test',type=int,default=1,help='Number of seeds for testing')
     parser.add_argument('--bootstrap_method',type=str,default='bca',help='Bootstrap method [bca, percentile, basic]')
     parser.add_argument('--round_values',type=int,default=0,help='Whether to round predicted values for regression or not')
     parser.add_argument('--add_dem',type=int,default=0,help='Whether to add demographic features or not')
     parser.add_argument('--cut_values',type=float,default=-1,help='Cut values above a given threshold')
     parser.add_argument('--regress_out',type=str,default='',help='List of demographic variables to regress out from target variable, separated by "_"')
-    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out')
+    parser.add_argument('--regress_out_method',type=str,default='linear',help='Whether to perform linear or non-linear regress-out'),
+    parser.add_argument('--scoring', type=str, default='', help='Scoring method for model selection')
     return parser.parse_args()
 
 def load_configuration(args):
@@ -91,7 +92,8 @@ def load_configuration(args):
         add_dem = bool(args.add_dem),
         cut_values = float(args.cut_values),
         regress_out = list(set(sorted(list(args.regress_out.split('_')))) - set([''])),
-        regress_out_method = str(args.regress_out_method)
+        regress_out_method = str(args.regress_out_method),
+        scoring = str(args.scoring)
     )
 
     return config
@@ -107,9 +109,6 @@ cut_values = config['cut_values']
 regress_out = config['regress_out']
 fill_na = config['fill_na'] if config['fill_na'] != 0 else None
 
-logging.info('Configuration loaded. Starting training...')
-logging.info('Training completed.')
-
 ##------------------ Configuration and Parameter Parsing ------------------##
 home = Path(os.environ.get('HOME', Path.home()))
 if 'Users/gp' in str(home):
@@ -119,7 +118,9 @@ else:
 
 results_dir = Path(str(data_dir).replace('data', 'results'))
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+main_config = json.load(open(Path(PROJECT_ROOT,'config','main_config.json')))
 
 y_labels = main_config['y_labels'][project_name]
 tasks = main_config['tasks'][project_name]
@@ -187,7 +188,7 @@ models_dict = {'clf':{
                     }
 }
 
-hyperp = json.load(Path(Path(__file__).parent,'hyperparameters.json').open())
+hyperp = json.load(Path(PROJECT_ROOT,'config','hyperparameters.json').open())
 
 for task in tasks:
     if isinstance(y_labels,dict):
@@ -241,22 +242,6 @@ for task in tasks:
             if len(covars + covars_regress_out) != 0:
                 all_data = all_data.dropna(subset=covars + covars_regress_out,how='any').reset_index(drop=True)
             
-            if config['problem_type'] == 'reg' and config['filter_outliers']:
-                all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
-
-            for covariate in covars + covars_regress_out:
-                if not isinstance(all_data[covariate].values(),(int,float)):
-                    all_data[covariate] = LabelEncoder().fit_transform(all_data[covariate])
-
-            covariates_ = all_data[[config['id_col']] + covars]
-            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
-            
-            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
-            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
-
-            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
-            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
-
             data = all_data[features + [y_label, config['id_col']]]
             #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
             data.dropna(subset=y_label,inplace=True)
@@ -271,7 +256,10 @@ for task in tasks:
             else:
                 config['problem_type'] = 'clf'
                 scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
-          
+
+            if config['problem_type'] == 'reg' and config['filter_outliers']:
+                all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
+
             #convert y_label to categories
             y = data.pop(y_label)
 
@@ -297,9 +285,22 @@ for task in tasks:
                 np.random.seed(42)
                 #Perform random permutations of the labels
                 y = np.random.permutation(y)
+
+            for covariate in covars + covars_regress_out:
+                if not isinstance(all_data[covariate],(int,float)):
+                    all_data[covariate] = LabelEncoder().fit_transform(all_data[covariate])
                     
+            covariates_ = all_data[[config['id_col']] + covars]
+            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
+              
             ID = data.pop(config['id_col'])
             
+            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
+            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
+
+            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
+            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
+
             if (config['problem_type'] == 'reg') & ('group' in data.columns) & (config['stratify']):
                 strat_col = data.pop('group')
             elif (config['problem_type'] == 'clf') & (config['stratify']):
@@ -374,7 +375,7 @@ for task in tasks:
                     n_max = int(n_samples_outer*(1-1/n_folds_inner))
                     config["kfold_folder"] += f'_{n_folds_inner}_folds'
 
-                with open(Path(__file__).parent/'config.json', 'w') as f:
+                with open(PROJECT_ROOT/'config'/'config.json', 'w') as f:
                     json.dump(config, f, indent=4)
 
                 for random_seed_test in random_seeds_test:

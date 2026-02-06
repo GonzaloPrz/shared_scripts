@@ -58,7 +58,7 @@
                     "bio"
                 ],
                 "Proyecto_Ivo": [
-                    "Animales__P"
+                    "nps"
                 ],
                 "GeroApathy": ["agradable"],
                 "arequipa": [
@@ -196,7 +196,8 @@
                     "Proyecto_Ivo": {
                                 "Animales":["osv","phonological_priming","properties","timing"],
                                 "P":["osv","phonological_priming","properties","timing"],
-                                "Animales__P":["osv","phonological_priming","properties","timing"]
+                                "Animales__P":["osv","phonological_priming","properties","timing"],
+                                "nps":["memory_im__memory_dif"]
                             },
 
                     "arequipa": ["verbosity__word_properties__talking_intervals",

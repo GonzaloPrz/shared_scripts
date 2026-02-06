@@ -1,17 +1,17 @@
 import pandas as pd
 from pathlib import Path
+from expected_cost.ec import CostMatrix
 from expected_cost.utils import *
 import itertools
 import json
-import numpy as np
 from scipy.stats import bootstrap
 
-from expected_cost.ec import CostMatrix
-
-import utils
+from src.utils import utils, metrics_utils
+from src.utils.utils import PROJECT_ROOT
 
 ##---------------------------------PARAMETERS---------------------------------##
-config = json.load(Path(Path(__file__).parent,'config.json').open())
+
+config = json.load(Path(PROJECT_ROOT,'config','config.json').open())
 
 project_name = config["project_name"]
 kfold_folder = config['kfold_folder']
@@ -26,8 +26,7 @@ filter_outliers = bool(config['filter_outliers'])
 round_values = bool(config['round_values'])
 cut_values = bool(config['cut_values'] > 0)
 regress_out = len(config['covariates']) > 0
-#version = config['version']
-version = 'v_1'
+version = config['version']
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -35,7 +34,9 @@ if "Users/gp" in str(home):
 else:
     results_dir = Path("D:/CNC_Audio/gonza/results", project_name)
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+main_config = json.load(Path(PROJECT_ROOT,'config','main_config.json').open())
 
 y_labels = config['y_labels']
 test_size = config['test_size']
@@ -57,7 +58,7 @@ tasks = [folder.name for folder in Path(results_dir).iterdir() if folder.is_dir(
 output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
                 
 if not hyp_opt:
-        output_filename = output_filename.replace('_hyp_opt','')
+    output_filename = output_filename.replace('_hyp_opt','')
 if not feature_selection:
     output_filename = output_filename.replace('_feature_selection','')
 if not filter_outliers:
@@ -91,8 +92,9 @@ for task in tasks:
         y_labels_ = [folder.name for folder in Path(results_dir,task,dimension,kfold_folder).iterdir() if folder.is_dir()]
          
         for y_label in y_labels_:      
-            #print(y_label)      
-            path_ = Path(results_dir,task,dimension,kfold_folder,y_label,stat_folder)
+            #print(y_label)    
+            path_ = utils._build_path(results_dir,task,dimension,y_label,'','',config,bayes=True,scoring=scorings[0])
+
             if not path_.exists():
                 continue
             
@@ -100,7 +102,7 @@ for task in tasks:
 
             for scoring in np.unique(scorings):
                 #print(scoring)
-                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "")
+                path = utils._build_path(results_dir,task,dimension,y_label,'','',config,bayes=True,scoring=scoring)
 
                 if not path.exists():
                     continue
@@ -121,7 +123,7 @@ for task in tasks:
                             print(model_type)
 
                             if not overwrite and all_results.shape[0] > 0:
-                                row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == random_seed_) & all_results['version'] == version]
+                                row = all_results[(all_results['task'] == task) & (all_results['dimension'] == dimension) & (all_results['model_type'] == model_type) & (all_results['y_label'] == y_label) & (all_results['random_seed_test'].astype(str) == random_seed_) & (all_results['version'] == version)]
                                 if len(row) > 0:
                                     continue
                             
@@ -135,10 +137,7 @@ for task in tasks:
                             problem_type = config['problem_type']
                             
                             metrics_names = main_config["metrics_names"][problem_type]
-                            scoring_col = f'{scoring}_extremo'
-
-                            extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
-                            ascending = any(x in scoring for x in ['error','norm'])
+                            scoring_col = f'mean_{scoring}'
 
                             if (cmatrix is not None) or (np.unique(y_dev).shape[0] > 2):
                                 metrics_names_ = list(set(metrics_names) - set(["roc_auc","f1","precision","recall"]))
@@ -149,7 +148,7 @@ for task in tasks:
                             data_indices = (np.arange(y_dev.shape[-1]),)
 
                             # Define the statistic function with data baked in
-                            stat_func = lambda indices: utils._calculate_metrics(
+                            stat_func = lambda indices: metrics_utils._calculate_metrics(
                             indices, outputs, y_dev, 
                             metrics_names_, problem_type, cmatrix)
 
@@ -236,12 +235,14 @@ for scoring in np.unique(scorings):
     all_results['random_seed_test'] = all_results['random_seed_test'].astype(str).apply(lambda x: str(x).lower())
 
     y_labels_ = all_results['y_label'].unique()
-    best_best_models = pd.DataFrame(columns=all_results.columns)
 
     random_seeds_test = all_results['random_seed_test'].unique()
 
-    scoring_col = f'{scoring}_extremo'
-    extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
+    #scoring_col = f'{scoring}_extremo'
+    scoring_col = f'mean_{scoring}'
+    best_best_models = pd.DataFrame(columns=list(all_results.columns) + [scoring_col])
+ 
+    #extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
     ascending = any(x in scoring for x in ['error','norm'])
 
     for random_seed_test in random_seeds_test: 
@@ -257,8 +258,8 @@ for scoring in np.unique(scorings):
                 for y_label in y_labels_:
                     best_best_models_ = all_results[(all_results['task'] == task) & (all_results['y_label'] == y_label) & (all_results['dimension'] == dimension) & (all_results['random_seed_test'].astype(str) == str(random_seed_test))]
 
-                    #if best_best_models_.shape[0] == 0:
-                    #    continue
+                    if best_best_models_.shape[0] == 0:
+                        continue
                     try:
                         best_best_models_[scoring_col] = best_best_models_[scoring].apply(lambda x: float(x.split(', ')[0]))
                     except:
@@ -273,11 +274,6 @@ for scoring in np.unique(scorings):
                         continue
 
                     best_best_models.loc[best_best_models.shape[0],:] = best_best_models_append
-
-    try:
-        best_best_models[scoring_col] = best_best_models[scoring].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
-    except:
-        best_best_models[scoring_col] = best_best_models[f'{scoring}_score'].apply(lambda x: float(x.split('(')[1].replace(')','').split(', ')[extremo]))
 
     best_best_models = best_best_models.sort_values(by=['y_label',scoring_col],ascending=ascending).reset_index(drop=True)
 

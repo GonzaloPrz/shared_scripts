@@ -38,8 +38,10 @@ scoring = config['scoring_metric']
 problem_type = config['problem_type']
 metrics_names = main_config['metrics_names'][problem_type]
 
-cmatrix = CostMatrix(np.array(main_config["cmatrix"][project_name])) if main_config["cmatrix"][project_name] is not None else None
-
+try:
+    cmatrix = CostMatrix(np.array(main_config["cmatrix"][project_name])) if main_config["cmatrix"][project_name] is not None else None
+except:
+    cmatrix = None
 # Set the style for the plots
 
 plt.rcParams.update({
@@ -53,7 +55,7 @@ plt.rcParams.update({
 })
 
 data_to_plot = pd.DataFrame()
-best_models_filename = f'best_best_models_{scoring}_{kfold_folder}_{scaler_name}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_bayes.csv'.replace('__','_')
+best_models_filename = f'best_best_models_{scoring}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_bayes.csv'.replace('__','_')
 best_models = pd.read_csv(Path(results_dir,best_models_filename))
 
 tasks = best_models['task'].unique()
@@ -72,17 +74,16 @@ for task,dimension,y_label,random_seed_test in itertools.product(tasks,dimension
     Path(results_dir,'plots','bayes').mkdir(parents=True, exist_ok=True)
 
     print(task, dimension)
-    path_to_results = Path(results_dir, task, dimension, scaler_name, kfold_folder, y_label, stat_folder,'bayes',scoring,'hyp_opt' if hyp_opt else '', 'feature_selection' if feature_selection else '', 'filter_outliers' if filter_outliers and problem_type == 'reg' else '','shuffle' if shuffle_labels else '')
-
+        
     if str(random_seed_test) == 'nan':
         random_seed = ''
     else:
         random_seed = random_seed_test
-                        
-    outputs_filename = f'outputs_{model_name}.pkl'
-    outputs_ = pickle.load(open(Path(path_to_results, random_seed, outputs_filename), 'rb'))
-    y_true_ = pickle.load(open(Path(path_to_results,random_seed, f'y_dev.pkl'), 'rb'))
-    
+
+    path_to_results = utils._build_path(results_dir, task, dimension,y_label,random_seed,'',config,bayes=True,scoring=scoring)
+
+    _, outputs_, y_true_, _, _, _ = utils._load_data(results_dir, task, dimension,y_label,model_name,random_seed,config,bayes=True,scoring=scoring)     
+
     data_indices = (np.arange(y_true_.shape[-1]),)
 
     stat_func = lambda indices: utils._calculate_metrics(
@@ -131,27 +132,27 @@ for task,dimension,y_label,random_seed_test in itertools.product(tasks,dimension
     else:
         data_to_plot = pd.concat((data_to_plot,data_append),axis=0)
 #        data_to_plot.to_csv(Path(results_dir,filename_to_save), index=False)
-data_to_plot = data_to_plot[((data_to_plot["task"] == "Animales") & (data_to_plot["dimension"] == "properties")) |
-                            ((data_to_plot["task"] == "nps") & (data_to_plot["dimension"] == "mmse")) |
+data_to_plot = data_to_plot[((data_to_plot["task"] == "Animales__P") & (data_to_plot["dimension"] == "properties")) |
+                            ((data_to_plot["task"] == "nps") & (data_to_plot["dimension"] == "memory_im__memory_dif")) |
                             ((data_to_plot["task"] == "nps") & (data_to_plot["dimension"] == "executive")) |
                             ((data_to_plot["task"] == "brain") & (data_to_plot["dimension"] == "norm_brain_lit")) |
                             ((data_to_plot["task"] == "connectivity") & (data_to_plot["dimension"] == "networks")) 
                             ]
 
-data_to_plot["dimension"] = data_to_plot["dimension"].map({"properties":"Fluency\n classifier","mmse": "Screening\n classifier","executive":"Executive\n classifier","norm_brain_lit":"Structural\n classifier", "networks":"Functional\n classifier"})
-for metric in metrics_names:
+data_to_plot["dimension"] = data_to_plot["dimension"].map({"properties":"Fluency\n classifier","memory_im__memory_dif": "Episodic memory\n classifier","executive":"Executive\n classifier","norm_brain_lit":"Structural\n classifier", "networks":"Functional\n classifier"})
+for metric in ['roc_auc','accuracy']:
     # Get mean values
     mean_animales = float(
         best_models[
-            (best_models['task'] == 'Animales') &
+            (best_models['task'] == 'Animales__P') &
             (best_models['dimension'] == 'properties')
         ][metric].values[0].split(', (')[0]
     )
 
-    mean_mmse = float(
+    mean_memory = float(
         best_models[
             (best_models['task'] == 'nps') &
-            (best_models['dimension'] == 'mmse')
+            (best_models['dimension'] == 'memory_im__memory_dif')
         ][metric].values[0].split(', (')[0]
     )
 
@@ -175,7 +176,7 @@ for metric in metrics_names:
             (best_models['dimension'] == 'networks')
         ][metric].values[0].split(', (')[0]
     )
-    means = np.array([mean_animales, mean_mmse, mean_executive, mean_brain, mean_conn])
+    means = np.array([mean_animales, mean_memory, mean_executive, mean_brain, mean_conn])
     
     # Get CI lower and upper bounds
     def extract_ci(task, dimension):
@@ -188,22 +189,22 @@ for metric in metrics_names:
         ci_low, ci_high = ci_part.split(', ')
         return float(ci_low), float(ci_high)
 
-    ci_animales = extract_ci('Animales', 'properties')
-    ci_mmse = extract_ci('nps', 'mmse')
+    ci_animales = extract_ci('Animales__P', 'properties')
+    ci_memory = extract_ci('nps', 'memory_im__memory_dif')
     ci_executive = extract_ci('nps','executive')
     ci_brain = extract_ci('brain', 'norm_brain_lit')
     ci_conn = extract_ci('connectivity', 'networks')
     
     # Compute lower and upper errors
-    ci_lowers = means - np.array([ci_animales[0], ci_mmse[0], ci_executive[0],ci_brain[0],ci_conn[0]])
-    ci_uppers = np.array([ci_animales[1], ci_mmse[1], ci_executive[1],ci_brain[1],ci_conn[1]]) - means
+    ci_lowers = means - np.array([ci_animales[0], ci_memory[0], ci_executive[0],ci_brain[0],ci_conn[0]])
+    ci_uppers = np.array([ci_animales[1], ci_memory[1], ci_executive[1],ci_brain[1],ci_conn[1]]) - means
     
     # Combine into (2, N) array
     yerr = np.vstack([ci_lowers, ci_uppers])
     
     plt.figure()
 
-    sns.violinplot(data=data_to_plot,x='dimension',y=metric, color="#1f77b4",order=['Fluency\n classifier', 'Screening\n classifier', 'Executive\n classifier','Structural\n classifier','Functional\n classifier'],inner=None)
+    sns.violinplot(data=data_to_plot,x='dimension',y=metric, color="#1f77b4",order=['Fluency\n classifier', 'Episodic memory\n classifier', 'Executive\n classifier','Structural\n classifier','Functional\n classifier'],inner=None)
     plt.errorbar(
     x=np.arange(len(data_to_plot['dimension'].unique())),
     y=means,

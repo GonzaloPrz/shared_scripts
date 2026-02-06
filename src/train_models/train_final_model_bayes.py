@@ -18,19 +18,19 @@ from sklearn.model_selection import StratifiedGroupKFold, GroupKFold, LeaveOneGr
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.impute import KNNImputer
 from sklearn.linear_model import Lasso, Ridge, ElasticNet
-from sklearn.naive_bayes import GaussianNB
 from statsmodels.stats.multitest import multipletests
 from pingouin import partial_corr
-from scipy.stats import shapiro
 import shap
 
 import pickle
 
-import utils
+from src.utils import utils, plot_utils, opt_utils, metrics_utils
+
+from src.utils.utils import PROJECT_ROOT
 
 from expected_cost.ec import CostMatrix
 
-config = json.load(Path(Path(__file__).parent,'config.json').open())
+config = json.load(Path(PROJECT_ROOT,'config','config.json').open())
 project_name = config["project_name"]
 scaler_name = config['scaler_name']
 n_folds = config['n_folds_inner']
@@ -56,7 +56,7 @@ if "Users/gp" in str(home):
 else:
     results_dir = Path("D:/CNC_Audio/gonza/results", project_name)
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+main_config = json.load(Path(PROJECT_ROOT,'config','main_config.json').open())
 
 data_file = main_config['data_file'][project_name]
 
@@ -80,9 +80,9 @@ models_dict = {'clf':{
                     'knnc':KNNC,
                     'xgb':xgboost,
                     'rf':RandomForestClassifier,
-                    'svc':SVC,
-                    'qda':QDA,
-                    'lda': LDA
+                    #'svc':SVC,
+                    #'qda':QDA,
+                    #'lda': LDA
                     },
                 
                 'reg':{'lasso':Lasso,
@@ -95,7 +95,7 @@ models_dict = {'clf':{
                     }
 }
 
-hyperp = json.load(Path(Path(__file__).parent,'hyperparameters.json').open())
+hyperp = json.load(Path(PROJECT_ROOT,'config','hyperparameters.json').open())
 
 results_dir = Path(Path.home(),'results',project_name) if 'Users/gp' in str(Path.home()) else Path('D:','CNC_Audio','gonza','results',project_name)
 data_dir = str(results_dir).replace('results','data')
@@ -111,7 +111,7 @@ for threshold in thresholds:
     if str(threshold) == 'None':
         threshold = None
 
-    ending = f'_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes_{config["version"]}.csv'.replace('__','_')
+    ending = f'_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
     if not hyp_opt:
         ending = ending.replace('_hyp_opt','')
     if not feature_selection:
@@ -141,37 +141,31 @@ for threshold in thresholds:
             model_type = row.model_type
 
             print(task,dimension,y_label,model_type)
-            path_to_results_ = Path(results_dir,task,dimension,kfold_folder,y_label,stat_folder)
-            
-            path_to_results = Path(path_to_results_,scoring,'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'])
+            path_to_results = utils._build_path(results_dir,task,dimension,y_label,'','',config,bayes=True,scoring=scoring)
+
             random_seeds = [folder.name for folder in path_to_results.iterdir() if 'random_seed' in folder.name]
 
             if len(random_seeds) == 0:
                 random_seeds = [''] 
 
             for random_seed in random_seeds:
+
+                IDs, outputs_dev, y_dev, _, _, _ = utils._load_data(results_dir, task, dimension, y_label, model_type, random_seed, config, bayes=True,scoring=scoring)
+
                 try:
-                    y_dev = np.load(open(Path(path_to_results,random_seed,'y_dev.npy'),'rb'),allow_pickle=True)
-                    X_train = np.load(open(Path(path_to_results,random_seed,'X_train.npy'),'rb'),allow_pickle=True)
-                    y_train = np.load(open(Path(path_to_results,random_seed,'y_train.npy'),'rb'),allow_pickle=True)
-                    outputs_dev = np.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.npy'),'rb'),allow_pickle=True)
-                    
-                    IDs = np.load(open(Path(path_to_results,random_seed,'IDs_dev.npy'),'rb'),allow_pickle=True)
-                    IDs_train = np.load(open(Path(path_to_results,random_seed,'IDs_train.npy'),'rb'),allow_pickle=True)
+                    X_train = np.load(open(Path(path_to_results,random_seed,config['version'],'X_train.npy'),'rb'),allow_pickle=True)
+                    y_train = np.load(open(Path(path_to_results,random_seed,config['version'],'y_train.npy'),'rb'),allow_pickle=True)
+                    IDs_train = np.load(open(Path(path_to_results,random_seed,config['version'],'IDs_train.npy'),'rb'),allow_pickle=True)
                 except:
-                    y_dev = pickle.load(open(Path(path_to_results,random_seed,'y_dev.pkl'),'rb'))
-                    X_train = pickle.load(open(Path(path_to_results,random_seed,'X_train.pkl'),'rb'))
-                    y_train = pickle.load(open(Path(path_to_results,random_seed,'y_train.pkl'),'rb'))
-                    outputs_dev = pickle.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.pkl'),'rb'))
-                    
-                    IDs = pickle.load(open(Path(path_to_results,random_seed,'IDs_dev.pkl'),'rb'))
-                    IDs_train = pickle.load(open(Path(path_to_results,random_seed,'IDs_train.pkl'),'rb'))
+                    X_train = pickle.load(open(Path(path_to_results,random_seed,config['version'],'X_train.pkl'),'rb'))
+                    y_train = pickle.load(open(Path(path_to_results,random_seed,config['version'],'y_train.pkl'),'rb'))
+                    IDs_train = pickle.load(open(Path(path_to_results,random_seed,config['version'],'IDs_train.pkl'),'rb'))
                 
                 if problem_type == 'reg':
                     y_pred = np.round(outputs_dev,decimals=0) if config['round_values'] else outputs_dev
                     predictions = pd.DataFrame({'id':IDs.flatten(),'y_pred':y_pred.flatten(),'y_true':y_dev.flatten()})
                 else:
-                    _, y_pred = utils.get_metrics_clf(outputs_dev, y_dev, [], cmatrix=cmatrix, priors=None, threshold=threshold)
+                    _, y_pred = metrics_utils.get_metrics_clf(outputs_dev, y_dev, [], cmatrix=cmatrix, priors=None, threshold=threshold)
                     predictions = {'id':IDs.flatten(),'y_pred':y_pred.flatten(),'y_true':y_dev.flatten()}
                     for c in range(outputs_dev.shape[-1]):
                         predictions[f'outputs_class_{c}'] = outputs_dev[:,:,c].flatten()
@@ -179,14 +173,14 @@ for threshold in thresholds:
 
                 predictions = predictions.drop_duplicates('id')
 
-                regress_out = list(set(json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out']) - set(['']))
-                covars = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['covariates']
+                regress_out = list(set(json.load(open(Path(path_to_results,random_seed,config['version'],'config.json'),'rb'))['regress_out']) - set(['']))
+                covars = json.load(open(Path(path_to_results,random_seed,config['version'],'config.json'),'rb'))['covariates']
 
                 covariates = pd.read_csv(Path(data_dir,data_file))[[id_col]+covars] if len(covars) > 0 else pd.DataFrame()
                 covariates = covariates[covariates[id_col].isin(np.unique(IDs))].reset_index(drop=True) if not covariates.empty else pd.DataFrame()
 
-                regress_out_method = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['regress_out_method']
-                fill_na = json.load(open(Path(path_to_results,random_seed,'config.json'),'rb'))['fill_na']
+                regress_out_method = json.load(open(Path(path_to_results,random_seed,config['version'],'config.json'),'rb'))['regress_out_method']
+                fill_na = json.load(open(Path(path_to_results,random_seed,config['version'],'config.json'),'rb'))['fill_na']
                 
                 covariates_regress_out = pd.read_csv(Path(data_dir,data_file))[[id_col]+regress_out] if len(regress_out) > 0 else None
 
@@ -235,34 +229,12 @@ for threshold in thresholds:
                                     'hyp_opt' if hyp_opt else '',
                                     'feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,config['version'],
                                     f'{model_type}_{method}.png')
-                    save_path.parent.mkdir(parents=True, exist_ok=True)
                     
-                    plt.figure(figsize=(8, 6))
-                    sns.regplot(
-                        x='y_pred', y='y_true', data=predictions,
-                        scatter_kws={'alpha': 0.6, 's': 50, 'color': '#c9a400'},  # color base
-                        line_kws={'color': 'black', 'linewidth': 2}
-                    )
-
-                    plt.xlabel('Predicted Value')
-                    plt.ylabel('True Value')
-
-                    plt.text(0.05, 0.95,
-                            f'$r$ = {r:.2f}\n$p$ = {np.round(p,3) if p > .001 else "< .001"}',
-                            fontsize=20,
-                            transform=plt.gca().transAxes,
-                            verticalalignment='top',
-                            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-                    plt.title(f'{task} | {y_label}', fontsize=25, pad=15)
-
-                    plt.tight_layout()
-                    plt.grid(False)
                     try:
-                        plt.savefig(save_path, dpi=300)
-                    except:
+                        plot_utils.plot_correlations(predictions,save_path,r,p,title=f'{task} | {y_label}')
+                    except Exception as e:
+                        print(f'Error plotting correlations for {task} | {y_label} | {model_type}: {e}')
                         continue
-                    plt.close()
 
                 if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,config['version'],f'model_{model_type}.npy').exists() and not overwrite:
                     print('Model already exists')
@@ -324,7 +296,7 @@ for threshold in thresholds:
 
                 model = utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None)
                 
-                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates_regress_out if regress_out else None,fill_na=fill_na,regress_out_method=regress_out_method)[0] if feature_selection else X_train.columns
+                best_features = opt_utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates_regress_out if regress_out else None,fill_na=fill_na,regress_out_method=regress_out_method)[0] if feature_selection else X_train.columns
                 
                 model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates_regress_out if regress_out else None, fill_na, regress_out_method)
 
@@ -380,7 +352,7 @@ for threshold in thresholds:
         if problem_type == 'reg':
             best_models = pd.concat((best_models,corr_results), axis=1) 
 
-        best_models = best_models.sort_values(by=['y_label',f'{scoring}_extremo'],ascending=[True,False])
+        best_models = best_models.sort_values(by=['y_label',f'mean_{scoring}'],ascending=[True,False])
         
         if problem_type == 'reg':
             p_vals = best_models['p_value'].values
