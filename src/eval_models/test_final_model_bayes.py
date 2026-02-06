@@ -16,15 +16,16 @@ from expected_cost.ec import CostMatrix
 from statsmodels.stats.multitest import multipletests
 from pingouin import partial_corr
 
-import utils
+from ..utils import utils
+from ..utils import metrics_utils
+from ..utils import plot_utils
 
 late_fusion = False
 
-config = json.load(Path(Path(__file__).parent,'config.json').open())
+config = json.load(Path(Path(__file__).parent.parent,'config','config.json').open())
 
 project_name = config["project_name"]
 id_col = config['id_col']
-scaler_name = config['scaler_name']
 stat_folder = config['stat_folder']
 kfold_folder = config['kfold_folder']
 hyp_opt = config["n_iter"] > 0 
@@ -48,7 +49,7 @@ if "Users/gp" in str(home):
 else:
     results_dir = Path("D:/CNC_Audio/gonza/results", project_name)
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+main_config = json.load(Path(Path(__file__).parent.parent,'config','main_config.json').open())
 
 try:
     thresholds = main_config['thresholds'][project_name]
@@ -174,7 +175,7 @@ for r, row in best_models.iterrows():
     data_indices = (np.arange(y_test.shape[-1]),)
 
     # Define the statistic function with data baked in
-    stat_func = lambda indices: utils._calculate_metrics(
+    stat_func = lambda indices: metrics_utils._calculate_metrics(
         indices, outputs, y_test.values if isinstance(y_test,pd.Series) else y_test,
         metrics_names, problem_type, cmatrix
     )
@@ -217,7 +218,7 @@ for r, row in best_models.iterrows():
     if problem_type == 'reg':
         predictions = pd.DataFrame({'id':IDs_test.flatten(),'y_pred':outputs.flatten(),'y_true':y_test.flatten()})
     else:
-        _, y_pred = utils.get_metrics_clf(outputs, y_test, [], cmatrix=cmatrix, priors=None, threshold=None)
+        _, y_pred = metrics_utils.get_metrics_clf(outputs, y_test, [], cmatrix=cmatrix, priors=None, threshold=None)
         predictions = {'id':IDs_test.values.flatten() if isinstance(IDs_test,pd.Series) else IDs_test,'y_pred':y_pred.flatten(),'y_true':y_test.values.flatten() if isinstance(y_test,pd.Series) else y_test.flatten()}
         for c in range(outputs.shape[-1]):
             predictions[f'outputs_class_{c}'] = outputs[:,c].flatten()
@@ -252,7 +253,6 @@ for r, row in best_models.iterrows():
         with open(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed_test,f'predictions_test.npy'),'wb') as f:
             pickle.dump(predictions,f)
         predictions.to_csv(Path(results_dir,'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],random_seed_test,f'predictions_test.csv'),index=False)
-    
 
         try:
             results = partial_corr(data=predictions,x='y_pred',y='y_true',covar=covars,method=method)
@@ -269,40 +269,8 @@ for r, row in best_models.iterrows():
                         'hyp_opt' if hyp_opt else '',
                         'filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',config['version'],
                         f'{model_type}_test.png')
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-
-        plt.figure(figsize=(8, 6))
-        sns.regplot(
-            x='y_pred', y='y_true', data=predictions,
-            scatter_kws={'alpha': 0.6, 's': 50, 'color': '#c9a400'},  # color base
-            line_kws={'color': 'black', 'linewidth': 2}
-        )
-
-        plt.xlabel('Predicted Value')
-        plt.xticks(rotation=45, ha='right')
-        plt.ylabel('True Value')
-
-        plt.text(0.05, 0.95,
-                f'$r$ = {r:.2f}\n$p$ = {np.round(p,3) if p >= .001 else "< .001"}',
-                fontsize=30,
-                transform=plt.gca().transAxes,
-                verticalalignment='top',
-                bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-        tasks_dict = {'animales':'Semantic',
-        "grandmean": "Average",
-        "nps":"Cognition",
-        "brain":"Brain"}
-
-        plt.title(f'{task} | {y_label}', fontsize=25, pad=15)
-
-        plt.tight_layout()
-        plt.grid(False)
-        try:
-            plt.savefig(save_path, dpi=300)
-        except:
-            continue
-        plt.close()
+        
+        plot_utils.plot_correlations(predictions, save_path,r, p, f'{task} | {y_label}')
 
 if problem_type == 'reg':
     p_vals = best_models['p_holdout'].values

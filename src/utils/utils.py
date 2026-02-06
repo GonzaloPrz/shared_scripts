@@ -2,19 +2,16 @@ import numpy as np
 from sklearn.metrics import *
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-import torch
 import pandas as pd
-from sklearn.svm import SVR, SVC
 from pathlib import Path
 
 from expected_cost.ec import *
 from expected_cost.utils import *
 from expected_cost.calibration import *
 
-from psrcal.losses import LogLoss
-from psrcal.calibration import *
-
 import shap, pickle
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 class Model():
     def __init__(self,model,scaler=None,imputer=None,calmethod=None,calparams=None):

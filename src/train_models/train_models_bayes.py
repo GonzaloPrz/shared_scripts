@@ -22,8 +22,9 @@ import logging,sys,os,argparse
 from psrcal.calibration import AffineCalLogLoss
 from sklearn.preprocessing import LabelEncoder
 
-from ..utils.utils import *
-from ..utils.cv_utils import *
+from src.utils.utils import *
+from src.utils.cv_utils import *
+from src.utils.utils import PROJECT_ROOT
 
 ##---------------------------------PARAMETERS---------------------------------##
 def parse_args():
@@ -120,7 +121,9 @@ else:
 
 results_dir = Path(str(data_dir).replace('data', 'results'))
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+main_config = json.load(open(Path(PROJECT_ROOT,'config','main_config.json')))
 
 y_labels = main_config['y_labels'][project_name]
 tasks = main_config['tasks'][project_name]
@@ -188,7 +191,7 @@ models_dict = {'clf':{
                     }
 }
 
-hyperp = json.load(Path(Path(__file__).parent,'config','hyperparameters.json').open())
+hyperp = json.load(Path(PROJECT_ROOT,'config','hyperparameters.json').open())
 
 for task in tasks:
     if isinstance(y_labels,dict):
@@ -242,27 +245,7 @@ for task in tasks:
             if len(covars + covars_regress_out) != 0:
                 all_data = all_data.dropna(subset=covars + covars_regress_out,how='any').reset_index(drop=True)
             
-            if config['problem_type'] == 'reg' and config['filter_outliers']:
-                all_data = utils.filter_outliers(all_data,parametric=True,n_sd=2)
-
-            covariates_ = all_data[[config['id_col']] + covars]
-            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
-            
-            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
-            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
-
-            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
-            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
-            
-            data = all_data[features + [y_label, config['id_col']]]
-            #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
-            data.dropna(subset=y_label,inplace=True)
-            if cut_values > 0:
-                data = data[data[y_label] <= cut_values]
-            
-            data = data.reset_index(drop=True)
-    
-            if len(np.unique(data[y_label])) > 3:
+            if len(np.unique(all_data[y_label])) > 3:
                 config['problem_type'] = 'reg'
                 if config['scoring'] != '':
                     scoring_metric = config['scoring']
@@ -273,8 +256,22 @@ for task in tasks:
                 if config['scoring'] != '':
                     scoring_metric = config['scoring']
                 else:
-                    scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
+                    scoring_metric = 'roc_auc' if len(np.unique(all_data[y_label])) == 2 else 'norm_expected_cost'
 
+            if config['problem_type'] == 'reg' and config['filter_outliers']:
+                all_data = filter_outliers(all_data,parametric=True,n_sd=2)
+
+            covariates_ = all_data[[config['id_col']] + covars]
+            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
+                    
+            data = all_data[features + [y_label, config['id_col']]]
+            #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
+            data.dropna(subset=y_label,inplace=True)
+            if cut_values > 0:
+                data = data[data[y_label] <= cut_values]
+            
+            data = data.reset_index(drop=True)
+    
             #convert y_label to categories
             y = data.pop(y_label)
 
@@ -303,6 +300,12 @@ for task in tasks:
                     
             ID = data.pop(config['id_col'])
             
+            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
+            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
+
+            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
+            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
+
             if (config['problem_type'] == 'reg') & ('group' in data.columns) & (config['stratify']):
                 strat_col = data.pop('group')
             elif (config['problem_type'] == 'clf') & (config['stratify']):
@@ -381,7 +384,7 @@ for task in tasks:
                     n_max = int(n_samples_outer*(1-1/n_folds_inner))
                     config["kfold_folder"] += f'_{n_folds_inner}_folds'
 
-                with open(Path(__file__).parent/'config.json', 'w') as f:
+                with open(PROJECT_ROOT/'config'/'config.json', 'w') as f:
                     json.dump(config, f, indent=4)
 
                 for random_seed_test in random_seeds_test:

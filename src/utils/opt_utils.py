@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score, log_loss, average_precision_score, f1
 
 from bayes_opt import BayesianOptimization
 
-from utils import Model
+from src.utils.utils import Model
 
 import torch
 

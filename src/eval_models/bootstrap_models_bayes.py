@@ -3,15 +3,14 @@ from pathlib import Path
 from expected_cost.utils import *
 import itertools
 import json
-import numpy as np
 from scipy.stats import bootstrap
 
-from expected_cost.ec import CostMatrix
-
-import utils
+from src.utils import utils, metrics_utils
+from src.utils.utils import PROJECT_ROOT
 
 ##---------------------------------PARAMETERS---------------------------------##
-config = json.load(Path(Path(__file__).parent,'config.json').open())
+
+config = json.load(Path(PROJECT_ROOT,'config','config.json').open())
 
 project_name = config["project_name"]
 kfold_folder = config['kfold_folder']
@@ -26,8 +25,7 @@ filter_outliers = bool(config['filter_outliers'])
 round_values = bool(config['round_values'])
 cut_values = bool(config['cut_values'] > 0)
 regress_out = len(config['covariates']) > 0
-#version = config['version']
-version = 'v_1'
+version = config['version']
 
 home = Path(os.environ.get("HOME", Path.home()))
 if "Users/gp" in str(home):
@@ -35,7 +33,9 @@ if "Users/gp" in str(home):
 else:
     results_dir = Path("D:/CNC_Audio/gonza/results", project_name)
 
-main_config = json.load(Path(Path(__file__).parent,'main_config.json').open())
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+
+main_config = json.load(Path(PROJECT_ROOT,'config','main_config.json').open())
 
 y_labels = config['y_labels']
 test_size = config['test_size']
@@ -57,7 +57,7 @@ tasks = [folder.name for folder in Path(results_dir).iterdir() if folder.is_dir(
 output_filename = f'best_models_{scorings[0]}_{kfold_folder}_{stat_folder}_{config["bootstrap_method"]}_hyp_opt_feature_selection_filter_outliers_round_cut_shuffled_calibrated_bayes.csv'.replace('__','_')
                 
 if not hyp_opt:
-        output_filename = output_filename.replace('_hyp_opt','')
+    output_filename = output_filename.replace('_hyp_opt','')
 if not feature_selection:
     output_filename = output_filename.replace('_feature_selection','')
 if not filter_outliers:
@@ -91,8 +91,9 @@ for task in tasks:
         y_labels_ = [folder.name for folder in Path(results_dir,task,dimension,kfold_folder).iterdir() if folder.is_dir()]
          
         for y_label in y_labels_:      
-            #print(y_label)      
-            path_ = Path(results_dir,task,dimension,kfold_folder,y_label,stat_folder)
+            #print(y_label)    
+            path_ = utils._build_path(results_dir,task,dimension,y_label,'','',config,bayes=True,scoring=scorings[0])
+
             if not path_.exists():
                 continue
             
@@ -100,7 +101,7 @@ for task in tasks:
 
             for scoring in np.unique(scorings):
                 #print(scoring)
-                path = Path(path_,scoring,"hyp_opt" if hyp_opt else "","feature_selection" if feature_selection else "","filter_outliers" if filter_outliers else "","rounded" if round_values else "","cut" if cut_values else "","shuffle" if shuffle_labels else "")
+                path = utils._build_path(results_dir,task,dimension,y_label,'','',config,bayes=True,scoring=scoring)
 
                 if not path.exists():
                     continue
@@ -137,9 +138,6 @@ for task in tasks:
                             metrics_names = main_config["metrics_names"][problem_type]
                             scoring_col = f'mean_{scoring}'
 
-                            #extremo = 1 if any(x in scoring for x in ['error','norm']) else 0
-                            #ascending = any(x in scoring for x in ['error','norm'])
-
                             if (cmatrix is not None) or (np.unique(y_dev).shape[0] > 2):
                                 metrics_names_ = list(set(metrics_names) - set(["roc_auc","f1","precision","recall"]))
                             else:
@@ -149,7 +147,7 @@ for task in tasks:
                             data_indices = (np.arange(y_dev.shape[-1]),)
 
                             # Define the statistic function with data baked in
-                            stat_func = lambda indices: utils._calculate_metrics(
+                            stat_func = lambda indices: metrics_utils._calculate_metrics(
                             indices, outputs, y_dev, 
                             metrics_names_, problem_type, cmatrix)
 
