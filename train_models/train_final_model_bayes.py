@@ -21,12 +21,13 @@ from sklearn.linear_model import Lasso, Ridge, ElasticNet
 from sklearn.naive_bayes import GaussianNB
 from statsmodels.stats.multitest import multipletests
 from pingouin import partial_corr
-from scipy.stats import shapiro
 import shap
 
 import pickle
 
-import utils
+from ..utils import utils
+from ..utils import utils_plot
+from ..utils import opt_utils
 
 from expected_cost.ec import CostMatrix
 
@@ -150,21 +151,16 @@ for threshold in thresholds:
                 random_seeds = [''] 
 
             for random_seed in random_seeds:
+
+                IDs, outputs_dev, y_dev, _, _, _ = utils._load_data(results_dir, task, dimension, y_label, model_type, random_seed, config, bayes=True,scoring=scoring)
+
                 try:
-                    y_dev = np.load(open(Path(path_to_results,random_seed,'y_dev.npy'),'rb'),allow_pickle=True)
                     X_train = np.load(open(Path(path_to_results,random_seed,'X_train.npy'),'rb'),allow_pickle=True)
                     y_train = np.load(open(Path(path_to_results,random_seed,'y_train.npy'),'rb'),allow_pickle=True)
-                    outputs_dev = np.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.npy'),'rb'),allow_pickle=True)
-                    
-                    IDs = np.load(open(Path(path_to_results,random_seed,'IDs_dev.npy'),'rb'),allow_pickle=True)
                     IDs_train = np.load(open(Path(path_to_results,random_seed,'IDs_train.npy'),'rb'),allow_pickle=True)
                 except:
-                    y_dev = pickle.load(open(Path(path_to_results,random_seed,'y_dev.pkl'),'rb'))
                     X_train = pickle.load(open(Path(path_to_results,random_seed,'X_train.pkl'),'rb'))
                     y_train = pickle.load(open(Path(path_to_results,random_seed,'y_train.pkl'),'rb'))
-                    outputs_dev = pickle.load(open(Path(path_to_results,random_seed,f'outputs_{model_type}.pkl'),'rb'))
-                    
-                    IDs = pickle.load(open(Path(path_to_results,random_seed,'IDs_dev.pkl'),'rb'))
                     IDs_train = pickle.load(open(Path(path_to_results,random_seed,'IDs_train.pkl'),'rb'))
                 
                 if problem_type == 'reg':
@@ -235,34 +231,12 @@ for threshold in thresholds:
                                     'hyp_opt' if hyp_opt else '',
                                     'feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,config['version'],
                                     f'{model_type}_{method}.png')
-                    save_path.parent.mkdir(parents=True, exist_ok=True)
                     
-                    plt.figure(figsize=(8, 6))
-                    sns.regplot(
-                        x='y_pred', y='y_true', data=predictions,
-                        scatter_kws={'alpha': 0.6, 's': 50, 'color': '#c9a400'},  # color base
-                        line_kws={'color': 'black', 'linewidth': 2}
-                    )
-
-                    plt.xlabel('Predicted Value')
-                    plt.ylabel('True Value')
-
-                    plt.text(0.05, 0.95,
-                            f'$r$ = {r:.2f}\n$p$ = {np.round(p,3) if p > .001 else "< .001"}',
-                            fontsize=20,
-                            transform=plt.gca().transAxes,
-                            verticalalignment='top',
-                            bbox=dict(facecolor='white', alpha=0.8, edgecolor='none'))
-
-                    plt.title(f'{task} | {y_label}', fontsize=25, pad=15)
-
-                    plt.tight_layout()
-                    plt.grid(False)
                     try:
-                        plt.savefig(save_path, dpi=300)
-                    except:
+                        utils_plot.plot_correlations(predictions,save_path,r,p,title=f'{task} | {y_label}')
+                    except Exception as e:
+                        print(f'Error plotting correlations for {task} | {y_label} | {model_type}: {e}')
                         continue
-                    plt.close()
 
                 if Path(results_dir,f'final_models_bayes',task,dimension,y_label,stat_folder,scoring,config["bootstrap_method"],'hyp_opt' if hyp_opt else '','feature_selection' if feature_selection else '','filter_outliers' if filter_outliers else '','rounded' if round_values else '', 'cut' if cut_values else '','rounded' if round_values else '','cut' if cut_values else '','shuffle' if shuffle_labels else '',random_seed,config['version'],f'model_{model_type}.npy').exists() and not overwrite:
                     print('Model already exists')
@@ -324,7 +298,7 @@ for threshold in thresholds:
 
                 model = utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None)
                 
-                best_features = utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates_regress_out if regress_out else None,fill_na=fill_na,regress_out_method=regress_out_method)[0] if feature_selection else X_train.columns
+                best_features = opt_utils.rfe(utils.Model(model_class(**best_params),scaler,imputer if config['fill_na'] != 0 else None,None,None),X_train,y_train.values if isinstance(y_train,pd.Series) else y_train,IDs_train,CV,scoring,problem_type,cmatrix=cmatrix,priors=None,threshold=threshold,round_values=config['round_values'],covariates=covariates_regress_out if regress_out else None,fill_na=fill_na,regress_out_method=regress_out_method)[0] if feature_selection else X_train.columns
                 
                 model.train(X_train[best_features],y_train.values if isinstance(y_train,pd.Series) else y_train,covariates_regress_out if regress_out else None, fill_na, regress_out_method)
 

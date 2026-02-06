@@ -8,10 +8,10 @@ sys.path.append(str(Path(Path.home(),'scripts_generales'))) if 'Users/gp' in str
 
 from matching_module import perform_matching
 
-project_name = '53_ceac'
+project_name = 'crossling_mci'
 data_dir = Path(Path.home(),'data',project_name) if 'Users/gp' in str(Path.home()) else Path('D:','CNC_Audio','gonza','data',project_name)
 
-target_vars = ['has_depression','has_anxiety','burnout_risk']
+target_vars = ['group']
 
 matching_vars = ['sex','age']
     

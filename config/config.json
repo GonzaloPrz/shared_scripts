@@ -1,7 +1,7 @@
 {
     "project_name": "Proyecto_Ivo",
     "stats": "",
-    "shuffle_labels": true,
+    "shuffle_labels": false,
     "stratify": true,
     "calibrate": false,
     "n_folds_outer": 3.0,
