@@ -241,6 +241,22 @@ for task in tasks:
             if len(covars + covars_regress_out) != 0:
                 all_data = all_data.dropna(subset=covars + covars_regress_out,how='any').reset_index(drop=True)
             
+            if config['problem_type'] == 'reg' and config['filter_outliers']:
+                all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
+
+            for covariate in covars + covars_regress_out:
+                if not isinstance(all_data[covariate].values(),(int,float)):
+                    all_data[covariate] = LabelEncoder().fit_transform(all_data[covariate])
+
+            covariates_ = all_data[[config['id_col']] + covars]
+            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
+            
+            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
+            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
+
+            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
+            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
+
             data = all_data[features + [y_label, config['id_col']]]
             #data.dropna(subset=[col for col in data.columns if data[col].isna().sum()/data.shape[0] > 0.20], axis=1,inplace=True)
             data.dropna(subset=y_label,inplace=True)
@@ -255,10 +271,7 @@ for task in tasks:
             else:
                 config['problem_type'] = 'clf'
                 scoring_metric = 'roc_auc' if len(np.unique(data[y_label])) == 2 else 'norm_expected_cost'
-
-            if config['problem_type'] == 'reg' and config['filter_outliers']:
-                all_data = all_data[np.abs((all_data[y_label] - all_data[y_label].mean()) / all_data[y_label].std()) < 2]
-
+          
             #convert y_label to categories
             y = data.pop(y_label)
 
@@ -293,19 +306,6 @@ for task in tasks:
                 strat_col = y
             else:
                 strat_col = None
-            
-            for covariate in covars + covars_regress_out:
-                if not isinstance(all_data[covariate],(int,float)):
-                    all_data[covariate] = LabelEncoder().fit_transform(all_data[covariate])
-                    
-            covariates_ = all_data[[config['id_col']] + covars]
-            covariates_regress_out = all_data[[config['id_col']] + covars_regress_out]
-            
-            covariates_ = covariates_[covariates_[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_.shape[1] > 0 else None
-            covariates_regress_out = covariates_regress_out[covariates_regress_out[config['id_col']].isin(np.unique(ID))].reset_index(drop=True) if covariates_regress_out.shape[1] > 0 else None
-
-            covariates_regress_out.drop(config['id_col'],axis=1,inplace=True) if covariates_regress_out is not None else None
-            covariates_.drop(config['id_col'],axis=1,inplace=True) if covariates_ is not None else None
             
             for model_key, model_class in models_dict[config['problem_type']].items():        
                 print(model_key)
